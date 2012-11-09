@@ -4,11 +4,14 @@ $(function () {
 
 	// Orange - FF913D
 	// pink - FF007A
+	// #B69E67
+	// #B2D0DD
+	// #1E4152
 
 	// World constants
-	var FIELD_HEIGHT = 10;
+	var FIELD_HEIGHT = 20;
 	var FIELD_WIDTH = 10;
-	var FIELD_SQUARE_SIZE = 100;
+	var FIELD_SQUARE_SIZE = 50;
 	var PLAYER_SIZE = FIELD_SQUARE_SIZE/2;
 
 	var COLOR_FIELD = '#58B442';
@@ -21,7 +24,12 @@ $(function () {
 	var TEAM_SIZE = 6;
 	
 	var my_team = [];
-	var game = {};
+	var game = {
+		turn: 1,
+		stage: 1,
+		score: 0,
+		points: 0
+	};
 
 	// Game objects
 	function Player() {
@@ -114,7 +122,7 @@ $(function () {
 	];
 
 	// Render field
-	$('body').append('<div id="field"></div>');
+	$('body').append('<div id="field" style="float: left;"></div>');
 	var table = '<table>';
 	for(var i=0; i<FIELD_HEIGHT; i++) {
 		table+='<tr>';
@@ -155,9 +163,14 @@ $(function () {
 		}
 	);
 
+	// Create HUD
+	var hud = '<div id="hud" style="float:right;"><div>Happyball</div></div>';
+	$('body').append(hud);
+
 	// Game start
-	my_team = generateTeam();
+	generateTeam();
 	renderTeam(my_team);
+	renderHUD();
 
 	$(".player").hover(
 		function () {
@@ -179,19 +192,16 @@ $(function () {
 	});
 	
 	function generateTeam() {
-		var team = [];
 		game.type = GAME_TYPES[randomFromInterval(0, 1)];
 
 		for(var i=0; i<TEAM_SIZE; i++) {
 			var newPlayer = new Player();
-			newPlayer.id = team.length;
+			newPlayer.id = my_team.length;
 			newPlayer.location = generatePlayerPosition();
 			console.log(i + ': '+newPlayer.location);
 			newPlayer.stats = game.type.positions[randomFromInterval(0, game.type.positions.length-1)];
-			team.push(newPlayer);
+			my_team.push(newPlayer);
 		}
-
-		return team;
 	}
 
 	function generatePlayerPosition() {
@@ -218,7 +228,7 @@ $(function () {
 	}
 
 	function placePlayer(id, name, pos) {
-		$($('.field_square')[pos]).html('<div player_id="'+id+'" class="player" style="background-color:'+COLOR_PLAYER+';width:50px;height:50px;">'+name+'</div>');
+		$($('.field_square')[pos]).html('<div player_id="'+id+'" class="player" style="background-color:'+COLOR_PLAYER+';width:'+PLAYER_SIZE+'px;height:'+PLAYER_SIZE+'px;">'+name+'</div>');
 	}
 
 	function showSquare(square, current_row) {
@@ -242,6 +252,23 @@ $(function () {
 
 	function randomFromInterval(from, to) {
 		return Math.floor(Math.random()*(to-from+1)+from);
+	}
+
+	function renderHUD() {
+		var game_stats = '<div>Game</div><table>';
+		game_stats += '<tr><td>Type</td><td>'+game.type.name+'</td></tr>';
+		game_stats += '<tr><td>Turn</td><td>'+game.turn+'</td></tr>';
+		game_stats += '<tr><td>Stage</td><td>'+game.stage+'</td></tr>';
+		game_stats += '<tr><td>Score</td><td>'+game.score+'</td></tr>';
+		game_stats += '<tr><td>Points</td><td>'+game.points+'</td></tr>';
+		game_stats += '</table>';
+		game_stats += '<div>Team</div><table>';
+		game_stats += '<tr><td>ID</td><td>Level</td><td>Location</td><td>Position</td></tr>';
+		for (var i = 0; i < my_team.length; i++) {
+			game_stats += '<tr><td>'+my_team[i].id+'</td><td>'+my_team[i].level+'</td><td>'+my_team[i].location+'</td><td>'+my_team[i].stats.position+'</td></tr>';
+		};
+		game_stats += '</table>';
+		$('#hud').html(game_stats);
 	}
 
 });
