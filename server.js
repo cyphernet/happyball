@@ -26,12 +26,17 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('init', function (data) {
     socket.userData = data;
-    socket.join(data.room_id);
+    socket.room_id = data.room_id;
+    socket.join(socket.room_id);
     socket.broadcast.to(data.room_id).emit('opponent', data);
   });
 
   socket.on('team', function (data) {
     socket.gameData = data;
-    socket.broadcast.to(data.room_id).emit('team', data);
+    socket.broadcast.to(socket.room_id).emit('team', data);
+  });
+
+  socket.on('msg', function (data) {
+    socket.broadcast.to(socket.room_id).emit('chat', data);
   });
 });

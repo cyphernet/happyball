@@ -43,7 +43,7 @@ $(function () {
 			console.log(this.id + ' moved');
 			$($('.field_square')[this.location]).html('');
 			this.location = target;
-			placePlayer(this.id, this.stats.position, this.location);
+			placePlayer(this.id, this.stats.position, this.location, COLOR_PLAYER);
 			resetMovementField();
 		};
 
@@ -167,37 +167,31 @@ $(function () {
 	);
 
 	// Create HUD
-	var hud = '<div style="float:right;">Happyball<div id="hud"></div><div id="game_log"><pre></pre></div></div>';
+	var hud = '<div style="float:right;"><div style="float:left;">Happyball<div style="width: 300px;" id="hud"></div></div><div style="float:left;">Game Log<div id="game_log" style="width: 300px; height: 300px; overflow-y:auto;"></div></div><div style="float:left;">Chat<pre id="chat" style="width: 300px; height: 300px; overflow-y:auto;"></pre><form id="chat_form"><input id="msg" /><input type="submit" /></form></div></div>';
 	$('body').append(hud);
 
 	// Game start
 	generateRoom();
 
-	$(".player").hover(
-		function () {
-			$(this).css('background-color', COLOR_PLAYER_HOVER);
-		},
-		function () {
-			$(this).css('background-color', COLOR_PLAYER);
-		}
-	);
-	
-	$(".player").click(function(){
-		var pos = $(this).offset();
-		var g = $(this).width()/2;
-		$('#menu').show();
-		$('#menu').offset({top: pos.top+g, left: pos.left+g});
-		var player_id = $(this).attr('player_id');
-
-		$('#menu').attr('player', player_id);
+	$('#chat_form').submit(function(){
+		game_log('chat', $('#name').val()+': '+$('#msg').val());
+		socket.emit('msg', {name: $('#name').val(), msg: $('#msg').val()});
+		$('#msg').val('');
+		$('#chat').scrollTop($('#chat')[0].scrollHeight);
+		return false;
 	});
-	
+
+	socket.on('chat', function (data) {
+		game_log('chat', data.name+': '+data.msg);
+		$('#chat').scrollTop($('#chat')[0].scrollHeight);
+	});
+
 	function generateTeam(opponent) {
 		if(opponent !== null) {
 			if(opponent)
-				game.type = 1;
-			else
 				game.type = 0;
+			else
+				game.type = 1;
 		} else {
 			game.type = randomFromInterval(0, GAME_TYPES.length-1);
 		}
@@ -210,9 +204,7 @@ $(function () {
 			my_team.push(newPlayer);
 		}
 
-		console.log('generateTeam');
 		socket.emit('team', {
-			room_id: game_id,
 			name: $('#name').val(),
 			team: my_team,
 			game_state: game
@@ -222,7 +214,7 @@ $(function () {
 	function generatePlayerPosition() {
 		var pos = 0;
 		do {
-			if(game.type == 'offense')
+			if(game.type == 0)
 				pos = randomFromInterval( 0, ((FIELD_HEIGHT*FIELD_WIDTH)/2) );
 			else
 				pos = randomFromInterval( ((FIELD_HEIGHT*FIELD_WIDTH)/2), (FIELD_HEIGHT*FIELD_WIDTH) );
@@ -248,10 +240,32 @@ $(function () {
 			placePlayer(team[i].id, team[i].stats.position, team[i].location, color);
 		};
 		renderHUD();
+		$(".player").hover(
+			function () {
+				$(this).css('background-color', COLOR_PLAYER_HOVER);
+			},
+			function () {
+				$(this).css('background-color', COLOR_PLAYER);
+			}
+		);
+		
+		$(".player").click(function(){
+			var pos = $(this).offset();
+			var g = $(this).width()/2;
+			$('#menu').show();
+			$('#menu').offset({top: pos.top+g, left: pos.left+g});
+			var player_id = $(this).attr('player_id');
+
+			$('#menu').attr('player', player_id);
+		});
 	}
 
 	function placePlayer(id, name, pos, color) {
-		$($('.field_square')[pos]).html('<div player_id="'+id+'" class="player" style="background-color:'+color+';width:'+PLAYER_SIZE+'px;height:'+PLAYER_SIZE+'px;">'+name+'</div>');
+		if(color == COLOR_PLAYER)
+			var player_div_id = 'player';
+		else
+			var player_div_id = 'opponent_player';	
+		$($('.field_square')[pos]).html('<div player_id="'+id+'" class="'+player_div_id+'" style="background-color:'+color+';width:'+PLAYER_SIZE+'px;height:'+PLAYER_SIZE+'px;">'+name+'</div>');
 	}
 
 	function showSquare(square, current_row) {
@@ -311,44 +325,38 @@ $(function () {
 
 		var user_id = 'u'+createId();
 
-		console.log('init');
 		socket.emit('init', {
 			room_id: game_id,
 			user_id: user_id,
 			name: $('#name').val()
 		});
 
-		game_log('Game start.');
-		game_log('Waiting for opponent.');
+		game_log('game_log', 'Game start.');
+		game_log('game_log', 'Waiting for opponent.');
 
 		socket.on('opponent', function (data) {
-			console.log('opponent');
-			console.log(data);
-
 			if(host) {
 				generateTeam(null);
 				renderTeam(my_team);
-				game_log($('#name').val()+' is on '+GAME_TYPES[game.type].name);
+				game_log('game_log', $('#name').val()+' is on '+GAME_TYPES[game.type].name);
 			}
 		});
 
 		socket.on('team', function (data) {
-			console.log('team');
-			console.log(data);
 			if(!host) {
-				generateTeam(data.game_state.type.name);
+				generateTeam(data.game_state.type);
 				renderTeam(my_team);
-				game_log($('#name').val()+' is on '+GAME_TYPES[data.game_state.type].name);
+				game_log('game_log', $('#name').val()+' is on '+GAME_TYPES[game.type].name);
 			}
 			renderTeam(data.team);
-			game_log(data.name+' is on '+GAME_TYPES[data.game_state.type].name);
+			game_log('game_log', data.name+' is on '+GAME_TYPES[data.game_state.type].name);
 		});
 	}
 
-	function game_log(text) {
+	function game_log(id, text) {
 		var d = new Date();
 		var date = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds();
-		$('#game_log').append('['+date+'] '+text+'<br/>');
+		$('#'+id).append('['+date+'] '+text+'<br/>');
 	}
 
 	function createId() {
