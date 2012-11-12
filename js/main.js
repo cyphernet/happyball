@@ -17,6 +17,7 @@ $(function () {
 	var COLOR_FIELD_HOVER = '#4E9F3B';
 	var COLOR_PLAYER = '#00A3BB';
 	var COLOR_PLAYER_HOVER = '#008FA4';
+	var COLOR_PLAYER_MOVED = '#B69E67';
 	var COLOR_MOVEMENT = '#FFD966';
 	var COLOR_MOVEMENT_HOVER = '#E2C05A';
 	var COLOR_OPPONENT = '#FF007A';
@@ -29,7 +30,7 @@ $(function () {
 		stage: 1,
 		score: 0,
 		points: 0,
-		room: 0
+		turn_end: false
 	};
 	var socket = io.connect();
 	var game_id = null;
@@ -39,12 +40,50 @@ $(function () {
 		this.id = 0;
 		this.level = 1;
 		this.location = 0;
+		this.next_move = -1;
 		this.move = function (target) {
-			console.log(this.id + ' moved');
 			$($('.field_square')[this.location]).html('');
 			this.location = target;
 			placePlayer(this.id, this.stats.position, this.location, COLOR_PLAYER);
+
+		};
+
+		this.create_move = function (target) {
 			resetMovementField();
+			this.next_move = target;
+			var player_pos = $($('.field_square')[this.location]).offset();
+			var next_pos = $($('.field_square')[target]).offset();
+
+			var w = next_pos.left - player_pos.left;
+			var h = next_pos.top - player_pos.top;
+
+			if(w > 0) {
+				if(h == 0) {
+					h = 1;
+				} else {
+					w = 1;
+				}
+				var start_pos = player_pos;
+			} else if(w < 0) {
+				w *= -1;
+				var start_pos = next_pos;
+			} else if(h > 0) {
+				var start_pos = player_pos;
+				w = 1;
+			} else if(h < 0) {
+				var start_pos = next_pos;
+				h *= -1;
+				w = 1;
+			}
+
+			var t = start_pos.top+(PLAYER_SIZE);
+			var l = start_pos.left+(PLAYER_SIZE);
+
+			$('#field').append('<div class="next_move_marker" style="position:absolute;top:'+t+'px;left:'+l+'px;width:'+w+'px;height:'+h+'px;border: 1px dashed;"></div>');
+
+			$($('.field_square')[this.location]).find('div').unbind('click');
+			$($('.field_square')[this.location]).find('div').css('background-color', COLOR_PLAYER_MOVED);
+			renderHUD();
 		};
 
 		this.showMovement = function () {
@@ -78,7 +117,7 @@ $(function () {
 
 			$('.move_to').click(function(){
 				var player_index = $('#menu').attr('player');
-				my_team[player_index].move($(".field_square").index(this));
+				my_team[player_index].create_move($(".field_square").index(this));
 			});
 		}
 	}
@@ -167,11 +206,42 @@ $(function () {
 	);
 
 	// Create HUD
-	var hud = '<div style="float:right;"><div style="float:left;">Happyball<div style="width: 300px;" id="hud"></div></div><div style="float:left;">Game Log<div id="game_log" style="width: 300px; height: 300px; overflow-y:auto;"></div></div><div style="float:left;">Chat<pre id="chat" style="width: 300px; height: 300px; overflow-y:auto;"></pre><form id="chat_form"><input id="msg" /><input type="submit" /></form></div></div>';
+	var hud = '<div style="float:right;"><div style="width: 300px; float:left;"><input id="end_turn" type="button" value="End Turn"/></div><div style="float:left;">Happyball<div style="width: 300px;" id="hud"></div></div><div style="float:left;">Game Log<div id="game_log" style="width: 300px; height: 300px; overflow-y:auto;"></div></div><div style="float:left;">Chat<pre id="chat" style="width: 300px; height: 300px; overflow-y:auto;"></pre><form id="chat_form"><input id="msg" /><input type="submit" /></form></div></div>';
 	$('body').append(hud);
 
 	// Game start
 	generateRoom();
+
+	$('#end_turn').click(function(){
+		if(!game.turn_end) {
+			socket.emit('end_turn', {
+				name: $('#name').val(), 
+				game_state: game,
+				team: my_team
+			});
+			game.turn_end = true;
+			game_log('game_log', 'Waiting for opponent');
+		}
+	});
+
+	socket.on('new_turn', function (data) {
+		game_log('game_log', 'Turn '+data.game_state.turn+'!');
+		game = data.game_state;
+		for (var i = data.team.length - 1; i >= 0; i--) {
+			my_team[i].location = data.team[i].location;
+			my_team[i].level = data.team[i].level;
+			my_team[i].next_move = data.team[i].next_move;
+		};
+		$(".player").remove();
+		$(".next_move_marker").remove();
+		$(".opponent_player").remove();
+		
+		renderHUD();
+		renderTeam(my_team);
+		renderTeam(data.other_team);
+		game.turn_end = false;
+	});
+
 
 	$('#chat_form').submit(function(){
 		game_log('chat', $('#name').val()+': '+$('#msg').val());
@@ -242,10 +312,12 @@ $(function () {
 		renderHUD();
 		$(".player").hover(
 			function () {
-				$(this).css('background-color', COLOR_PLAYER_HOVER);
+				if(my_team[$(this).attr('player_id')].next_move == -1)
+					$(this).css('background-color', COLOR_PLAYER_HOVER);
 			},
 			function () {
-				$(this).css('background-color', COLOR_PLAYER);
+				if(my_team[$(this).attr('player_id')].next_move == -1)
+					$(this).css('background-color', COLOR_PLAYER);
 			}
 		);
 		
@@ -300,9 +372,9 @@ $(function () {
 		game_stats += '<tr><td>Points</td><td>'+game.points+'</td></tr>';
 		game_stats += '</table>';
 		game_stats += '<div>Team</div><table>';
-		game_stats += '<tr><td>ID</td><td>Level</td><td>Location</td><td>Position</td></tr>';
+		game_stats += '<tr><td>ID</td><td>Level</td><td>Location</td><td>Next Move</td><td>Position</td></tr>';
 		for (var i = 0; i < my_team.length; i++) {
-			game_stats += '<tr><td>'+my_team[i].id+'</td><td>'+my_team[i].level+'</td><td>'+my_team[i].location+'</td><td>'+my_team[i].stats.position+'</td></tr>';
+			game_stats += '<tr><td>'+my_team[i].id+'</td><td>'+my_team[i].level+'</td><td>'+my_team[i].location+'</td><td>'+my_team[i].next_move+'</td><td>'+my_team[i].stats.position+'</td></tr>';
 		};
 		game_stats += '</table>';
 		$('#hud').html(game_stats);
@@ -310,6 +382,7 @@ $(function () {
 
 	function generateRoom() {
 		var host = true;
+		var single_player = false;
 
 		if($('#name').val() == '') {
 			$('#name').val('Dude-'+randomFromInterval(1, 100));
@@ -333,6 +406,11 @@ $(function () {
 
 		game_log('game_log', 'Game start.');
 		game_log('game_log', 'Waiting for opponent.');
+
+		if(single_player) {
+			generateTeam(null);
+			renderTeam(my_team);
+		}
 
 		socket.on('opponent', function (data) {
 			if(host) {
