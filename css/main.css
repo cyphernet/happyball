@@ -296,3 +296,7 @@ textarea {
         page-break-after: avoid;
     }
 }
+
+.ball_here {
+    background-color:#ff0000 !important;
+}
