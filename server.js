@@ -67,20 +67,23 @@ io.sockets.on('connection', function (socket) {
         data.team[i].next_move = other_player.team[i].next_move = -1;
       };
 
-
+      var ball = null;
       //Move Da balls
-      if(data.ball.location != -1) {
-        var ball = data.ball;
-      } else {
-        var ball = other_player.ball;
+      if(data.ball.next_move != -1) {
+        ball = data.ball;
+      } else if (other_player.ball.next_move != -1) {
+        ball = other_player.ball;
       }
+    
+      if(ball) {
+        data.ball.location =  ball.next_move;
+        other_player.ball.location = ball.next_move;
+        data.ball.next_move = -1;
+        other_player.ball.next_move = -1;
 
-      console.log(ball);
-      
-      if(ball.next_move != -1) {
-        data.ball.location = other_player.ball.location = ball.next_move;
         for (var i = data.team.length - 1; i >= 0; i--) {
-          data.team[i].hasBall = other_player.team[i].hasBall =  0;
+          data.team[i].hasBall =  0;
+          other_player.team[i].hasBall =  0;
           //Ball Catching super simple logic
           if(data.team[i].location === ball.next_move)
             data.team[i].hasBall = 1;
@@ -89,7 +92,7 @@ io.sockets.on('connection', function (socket) {
         }
 
       }
-      console.log(data.ball);
+
       data.other_team = other_player.team;
       other_player.other_team = data.team;
       socket.emit('new_turn', data);
