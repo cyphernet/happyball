@@ -6,7 +6,7 @@ happyball.Player = function() {
 	goog.base(this);
 
 	this.setFill(happyball.player_sprites.getFrame('idle_right_1.png'));
-
+	this.setAnchorPoint(0, 0);
 	var anim = new lime.animation.KeyframeAnimation();
 	anim.delay= .3;
 	for(var i=1;i<=4;i++){

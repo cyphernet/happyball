@@ -15,194 +15,189 @@ goog.require('lime.ASSETS.player_idle.plist')
 goog.require('lime.animation.MoveBy');
 goog.require('happyball.Player');
 
+var GAME_TYPES = [{
+		name: 'offense',
+		positions: [{
+				distance: 2,
+				speed: 1,
+				skill: 2,
+				position: 'center'
+			},{
+				distance: 2,
+				speed: 1,
+				skill: 2,
+				position: 'center'
+			}, {
+				distance: 4,
+				speed: 2,
+				skill: 1,
+				position: 'running back'
+			}, {
+				distance: 3,
+				speed: 2,
+				skill: 2,
+				position: 'receiver'
+			}, {
+				distance: 1,
+				speed: 1,
+				skill: 5,
+				position: 'qb'
+			}
+		]
+	}, {
+		name: 'defense',
+		positions: [{
+				distance: 2,
+				speed: 1,
+				skill: 2,
+				position: 'end'
+			}, {
+				distance: 4,
+				speed: 2,
+				skill: 1,
+				position: 'safety'
+			}, {
+				distance: 3,
+				speed: 2,
+				skill: 2,
+				position: 'safety'
+			}, {
+				distance: 3,
+				speed: 2,
+				skill: 2,
+				position: 'line back'
+			}, {
+				distance: 3,
+				speed: 2,
+				skill: 2,
+				position: 'line back'
+			}
+		]
+	}
+];
 
 // entrypoint
 happyball.start = function(){
 
-	var FIELD_HEIGHT = 8;
-	var FIELD_WIDTH = 16;
-	var FIELD_SQUARE_SIZE = 50;
-	var PLAYER_SIZE = FIELD_SQUARE_SIZE/2;
+	happyball.my_team = [];
+	happyball.game = {
+		turn: 1,
+		stage: 1,
+		score: 0,
+		points: 0,
+		turn_end: false
+	};
 
-	var director = new lime.Director(document.body);
+	// Game window
+	var director = new lime.Director(document.body, 1400, 1024);
 	director.makeMobileWebAppCapable();
 	director.setDisplayFPS(false);    
 
+	// Main game scene
 	var gamescene = new lime.Scene;
-	layer = new lime.Layer();
-	gamescene.appendChild(layer);
 
-	goog.events.listen(gamescene,['mousedown','touchstart'],function(e){
-	    happyball.moveToPosition(happyball.selectedPlayer, gamescene.localToNode(e.position,layer));
-	})
+	// HUD
+	var hud_layer = new lime.Layer();
+	gamescene.appendChild(hud_layer);
 
+	// hud BACKGROUND
+	var header_bg = new lime.Sprite().setSize(1400, 102).setFill('assets/header_bg.png').setPosition(10, 30).setAnchorPoint(0,0);
+	hud_layer.appendChild(header_bg);
+
+	// Top lgoo
+	var logo = new lime.Sprite().setSize(269, 157).setFill('assets/logo.png').setPosition(100, 10).setAnchorPoint(0,0);
+	hud_layer.appendChild(logo);
+
+	// Game layer
+	var game_layer = new lime.Layer();
+	gamescene.appendChild(game_layer);
+
+	var field = new lime.Sprite().setSize(1400, 555).setFill('assets/field.png').setPosition(0, 185).setAnchorPoint(0,0);
+	game_layer.appendChild(field);
+
+	// Players sprite sheet
 	happyball.player_sprites = new lime.SpriteSheet('assets/p.png', lime.ASSETS.player_idle.plist);
 
-	var sprite = happyball.createPlayer().setPosition(100,100);
-    layer.appendChild(sprite);
+	happyball.generateTeam();
+	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
+		var x = 200 + happyball.my_team[i].location.column*50;
+		var y = 200 + happyball.my_team[i].location.row*50;
+		happyball.my_team[i].setPosition(x, y)
+		game_layer.appendChild(happyball.my_team[i]);
+	};
 
-	happyball.selectedPlayer = sprite;
-	sprite.select();
+	goog.events.listen(gamescene,['mousedown','touchstart'],function(e){
+		happyball.moveToPosition(happyball.selectedPlayer, gamescene.localToNode(e.position,game_layer));
+		console.log(e.position);
+	})
 
-    sprite = happyball.createPlayer().setPosition(500,100);
-    layer.appendChild(sprite);
-
-    sprite = happyball.createPlayer().setPosition(300,200);
-    layer.appendChild(sprite);
-
-    sprite = happyball.createPlayer().setPosition(200,300);
-    layer.appendChild(sprite);
-
-    sprite = happyball.createPlayer().setPosition(400,300);
-    layer.appendChild(sprite);
-
-/*
-	var anim = new lime.animation.KeyframeAnimation();
-	anim.delay= .3;
-	for(var i=1;i<=4;i++){
-	    anim.addFrame(ss.getFrame('idle_right_'+i+'.png').
-	        setSize(50,50));
-	}
-	for(var i=4;i>=1;i--){
-	    anim.addFrame(ss.getFrame('idle_right_'+i+'.png').
-	        setSize(50,50));
-	}
-    
-    
-	sprite.runAction(anim);
-
-
-	var mapLayer  = new lime.Layer().setPosition(0,0).setRenderer(lime.Renderer.CANVAS).setAnchorPoint(0,0);
-	
-
-	for(var i=0; i<FIELD_HEIGHT; i++) {
-
-		for(var j=0; j<FIELD_WIDTH; j++) {
-			var x = 0 + (j*FIELD_SQUARE_SIZE);
-			var y = 0 + (i*FIELD_SQUARE_SIZE);
-
-			var field = new lime.Sprite().setSize(FIELD_SQUARE_SIZE,FIELD_SQUARE_SIZE).setFill('assets/field.png').setPosition(x, y).setAnchorPoint(0, 0);
-			mapLayer.appendChild(field);
-		}
-
-
-	}
-	scene.appendChild(mapLayer);
-
-
-	var playerLayer  = new lime.Layer().setPosition(0,0).setRenderer(lime.Renderer.CANVAS).setAnchorPoint(0,0);
-	var player = new lime.Sprite().setSize(PLAYER_SIZE, PLAYER_SIZE).setFill('assets/player_right.png').setPosition(0, 0).setAnchorPoint(0, 0);
-	playerLayer.appendChild(player);
-
-	var player = new lime.Sprite().setSize(PLAYER_SIZE, PLAYER_SIZE).setFill('assets/player_right.png').setPosition(50, 0).setAnchorPoint(0, 0);
-	playerLayer.appendChild(player);
-
-	scene.appendChild(playerLayer);
-
-
-
-	goog.events.listen(field, ['mousedown','touchstart'], function(e) {         
-		console.log('touch');
-	});
-
-	goog.events.listen(field, 'mouseover', function(e) {         
-		console.log(this);
-	});
-
-
-
-*/
-/*
-	//add some interaction
-	goog.events.listen(target,['mousedown','touchstart'],function(e){
-
-		//animate
-		target.runAction(new lime.animation.Spawn(
-			new lime.animation.FadeTo(.5).setDuration(.2),
-			new lime.animation.ScaleTo(1.5).setDuration(.8)
-		));
-
-		title.runAction(new lime.animation.FadeTo(1));
-
-		//let target follow the mouse/finger
-		e.startDrag();
-
-		//listen for end event
-		e.swallow(['mouseup','touchend'],function(){
-			target.runAction(new lime.animation.Spawn(
-				new lime.animation.FadeTo(1),
-				new lime.animation.ScaleTo(1),
-				new lime.animation.MoveTo(512,384)
-			));
-
-			title.runAction(new lime.animation.FadeTo(0));
-		});
-
-
-	});
-*/
 	// set current scene active
 	director.replaceScene(gamescene);
 
 }
 
-happyball.createPlayer = function(){
-    var sprite = new lime.Sprite().setPosition(200,200)
-        .setFill(happyball.player_sprites.getFrame('idle_right_1.png'));
+happyball.generateTeam = function(opponent) {
 
-	var anim = new lime.animation.KeyframeAnimation();
-	anim.delay= .3;
-	for(var i=1;i<=4;i++){
-	    anim.addFrame(happyball.player_sprites.getFrame('idle_right_'+i+'.png').
-	        setSize(50,50));
-	}
-	for(var i=4;i>=1;i--){
-	    anim.addFrame(happyball.player_sprites.getFrame('idle_right_'+i+'.png').
-	        setSize(50,50));
-	}
+	if(opponent !== undefined) {
+		if(opponent)
+			happyball.game.type = 0;
+		else
+			happyball.game.type = 1;
+	} else {
 
-	sprite.runAction(anim);
-	
-	// show if monster is selected
-	var light = new lime.Circle().setSize(6,6).setFill('#f90').setPosition(0,-40).setHidden(true);
-	sprite.appendChild(light);
-	
-	sprite.select = function(){
-	    if(happyball.selectedPlayer)
-	        happyball.selectedPlayer.deselect();
-	    light.setHidden(false);
-	    happyball.selectedPlayer = this;
+		happyball.game.type = randomFromInterval(0, GAME_TYPES.length-1);
 	}
-	sprite.deselect = function(){
-	    light.setHidden(true);
+	happyball.game.type = 0;
+
+	for(var i=0; i<GAME_TYPES[0].positions.length; i++) {
+		var newPlayer = new happyball.Player();
+		newPlayer.id = happyball.my_team.length;
+		newPlayer.location = happyball.generatePlayerPosition();
+		newPlayer.stats = GAME_TYPES[happyball.game.type].positions[i];
+		if (newPlayer.stats.position === 'qb') {
+			newPlayer.hasBall = 1;
+			//happyball.football.location = newPlayer.location;
+		}
+		happyball.my_team.push(newPlayer);
 	}
-	
-	// other element for hit area because original images have edges and I didn't crop
-	var hitarea = new lime.Sprite().setSize(50,80);
-	sprite.appendChild(hitarea);
-	
-	goog.events.listen(hitarea,['mousedown','touchstart'],function(e){
-	    this.select();
-	    e.event.stopPropagation();
-	},false,sprite)
-	
-	return sprite;
+}
+
+happyball.generatePlayerPosition = function() {
+	var pos = {column: 0, row: 0};
+	do {
+		if(happyball.game.type == 0)
+			pos.column = randomFromInterval(1, 9);
+		else
+			pos.column = randomFromInterval(10, 19);
+
+		pos.row = randomFromInterval(1, 8);
+
+	} while (happyball.isPlayerHere(pos));
+
+	return pos;
+}
+happyball.isPlayerHere = function(pos) {
+	for (var i = 0; i < happyball.my_team.length; i++) {
+		if(happyball.my_team[i].location == pos)
+			return true;
+	};
+	return false;
 }
 
 happyball.moveToPosition = function(player, pos){
-    
-    var delta = goog.math.Coordinate.difference(pos,player.getPosition()),
-        angle = Math.atan2(-delta.y,delta.x);
-    
-    //determine the direction    
-    var dir = Math.round(angle/(Math.PI*2)*8);
-    var dirs = ['e','ne','n','nw','w','sw','s','se'];
-    if(dir<0) dir=8+dir;
-    dir = dirs[dir];
-    
-    //move
-    var move =new lime.animation.MoveBy(delta).setEasing(lime.animation.Easing.LINEAR).setSpeed(2);
-    player.runAction(move);
+		
+	var delta = goog.math.Coordinate.difference(pos,player.getPosition()),
+		angle = Math.atan2(-delta.y,delta.x);
+	
+	//determine the direction    
+	var dir = Math.round(angle/(Math.PI*2)*8);
+	var dirs = ['e','ne','n','nw','w','sw','s','se'];
+	if(dir<0) dir=8+dir;
+	dir = dirs[dir];
+	
+	//move
+	var move =new lime.animation.MoveBy(delta).setEasing(lime.animation.Easing.LINEAR).setSpeed(2);
+	player.runAction(move);
 	
 	// show animation
 	//var anim = new lime.animation.KeyframeAnimation();
@@ -211,14 +206,18 @@ happyball.moveToPosition = function(player, pos){
 	//    anim.addFrame(test.ss.getFrame('walking-'+dir+'000'+i+'.png'));
 	//}
    // player.runAction(anim);
-    
-    // on stop show front facing
-    goog.events.listen(move,lime.animation.Event.STOP,function(){
-      //  anim.stop();
-        //player.setFill(test.ss.getFrame('walking-s0001.png'));
-    })
-    
+	
+	// on stop show front facing
+	goog.events.listen(move,lime.animation.Event.STOP,function(){
+	  //  anim.stop();
+		//player.setFill(test.ss.getFrame('walking-s0001.png'));
+	})
+	
 }
 
 //this is required for outside access after code is compiled in ADVANCED_COMPILATIONS mode
 goog.exportSymbol('happyball.start', happyball.start);
+
+function randomFromInterval(from, to) {
+	return Math.floor(Math.random()*(to-from+1)+from);
+}
