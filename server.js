@@ -7,7 +7,11 @@ var port = process.env.PORT || 9080;
 server.listen(port);
 
 app.get('/', function (req, res) {
-  res.sendfile(__dirname + '/index.html');
+  res.sendfile(__dirname + '/bin/happyball/happyball.html');
+});
+
+app.get('/happyball.js', function (req, res) {
+  res.sendfile(__dirname + '/bin/happyball/happyball.js');
 });
 
 app.configure(function(){
