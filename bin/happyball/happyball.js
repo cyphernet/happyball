@@ -121,15 +121,15 @@ happyball.start = function(){
 	happyball.generateTeam();
 	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
 		var x = 200 + happyball.my_team[i].location.column*50;
-		var y = 200 + happyball.my_team[i].location.row*50;
+		var y = 220 + happyball.my_team[i].location.row*50;
 		happyball.my_team[i].setPosition(x, y)
 		game_layer.appendChild(happyball.my_team[i]);
 	};
 
-	goog.events.listen(gamescene,['mousedown','touchstart'],function(e){
-		happyball.moveToPosition(happyball.selectedPlayer, gamescene.localToNode(e.position,game_layer));
-		console.log(e.position);
-	})
+	//goog.events.listen(gamescene,['mousedown','touchstart'],function(e){
+	//	happyball.moveToPosition(happyball.selectedPlayer, gamescene.localToNode(e.position,game_layer));
+	//	console.log(e.position);
+	//})
 
 	// set current scene active
 	director.replaceScene(gamescene);
@@ -166,16 +166,17 @@ happyball.generatePlayerPosition = function() {
 	var pos = {column: 0, row: 0};
 	do {
 		if(happyball.game.type == 0)
-			pos.column = randomFromInterval(1, 9);
+			pos.column = randomFromInterval(0, 9);
 		else
 			pos.column = randomFromInterval(10, 19);
 
-		pos.row = randomFromInterval(1, 8);
+		pos.row = randomFromInterval(0, 9);
 
 	} while (happyball.isPlayerHere(pos));
 
 	return pos;
 }
+
 happyball.isPlayerHere = function(pos) {
 	for (var i = 0; i < happyball.my_team.length; i++) {
 		if(happyball.my_team[i].location == pos)
