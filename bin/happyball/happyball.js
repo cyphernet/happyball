@@ -116,12 +116,12 @@ happyball.start = function(){
 	game_layer.appendChild(field);
 
 	// Players sprite sheet
-	happyball.player_sprites = new lime.SpriteSheet('assets/p.png', lime.ASSETS.player_idle.plist);
+	happyball.player_sprites = new lime.SpriteSheet('assets/p.png', lime.ASSETS.player_idle.plist, lime.parser.ZWOPTEX);
 
 	happyball.generateTeam();
 	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
-		var x = 200 + happyball.my_team[i].location.column*50;
-		var y = 220 + happyball.my_team[i].location.row*50;
+		var x = 200 + happyball.my_team[i].game_vars.location.column*50;
+		var y = 220 + happyball.my_team[i].game_vars.location.row*50;
 		happyball.my_team[i].setPosition(x, y)
 		game_layer.appendChild(happyball.my_team[i]);
 	};
@@ -151,11 +151,11 @@ happyball.generateTeam = function(opponent) {
 
 	for(var i=0; i<GAME_TYPES[0].positions.length; i++) {
 		var newPlayer = new happyball.Player();
-		newPlayer.id = happyball.my_team.length;
-		newPlayer.location = happyball.generatePlayerPosition();
-		newPlayer.stats = GAME_TYPES[happyball.game.type].positions[i];
-		if (newPlayer.stats.position === 'qb') {
-			newPlayer.hasBall = 1;
+		newPlayer.game_vars.id = happyball.my_team.length;
+		newPlayer.game_vars.location = happyball.generatePlayerPosition();
+		newPlayer.game_vars.stats = GAME_TYPES[happyball.game.type].positions[i];
+		if (newPlayer.game_vars.stats.position === 'qb') {
+			newPlayer.game_vars.hasBall = 1;
 			//happyball.football.location = newPlayer.location;
 		}
 		happyball.my_team.push(newPlayer);
@@ -179,7 +179,7 @@ happyball.generatePlayerPosition = function() {
 
 happyball.isPlayerHere = function(pos) {
 	for (var i = 0; i < happyball.my_team.length; i++) {
-		if(happyball.my_team[i].location == pos)
+		if(happyball.my_team[i].game_vars.location == pos)
 			return true;
 	};
 	return false;
@@ -214,6 +214,13 @@ happyball.moveToPosition = function(player, pos){
 		//player.setFill(test.ss.getFrame('walking-s0001.png'));
 	})
 	
+}
+
+happyball.createLine = function(size, x1, y1, x2, y2) { 
+	var dx = Math.abs(x2-x1); 
+	var dy = Math.abs(y2-y1); 
+	var width = Math.sqrt(dx*dx+dy*dy)+size; 
+	return new lime.Sprite().setSize(width, size).setAnchorPoint(size/2/ width, .5).setRotation(-Math.atan2(y2-y1, x2-x1)*180/Math.PI).setPosition(x1, y1);
 }
 
 //this is required for outside access after code is compiled in ADVANCED_COMPILATIONS mode

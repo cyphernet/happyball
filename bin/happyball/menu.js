@@ -46,7 +46,7 @@ happyball.Menu = function() {
 
 		// Click event
 		goog.events.listen(lbl,['mousedown','touchstart'],function(e){
-			if(txt == 'move')
+			if(txt == 'move' && happyball.selectedPlayer)
 				happyball.selectedPlayer.showMovement();
 			e.event.stopPropagation();
 		},false,lbl);

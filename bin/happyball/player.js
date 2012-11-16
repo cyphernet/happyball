@@ -7,8 +7,14 @@ goog.require('happyball.Square');
 happyball.Player = function() {
 	goog.base(this);
 
-	
-
+	this.game_vars = {
+		id: 0,
+		level: 1,
+		location: 0,
+		next_move: -1,
+		hasBall: 0,
+		moved: false
+	};
 
 	this.setFill(happyball.player_sprites.getFrame('idle_right_1.png'));
 	this.setAnchorPoint(0, 0);
@@ -30,28 +36,41 @@ happyball.Player = function() {
 	this.appendChild(light);
 
 	// Create a menu for the player
-	var player_menu = new happyball.Menu().setHidden(true);
-	this.appendChild(player_menu);
+	var player_menu = new happyball.Menu();
 
 	var movement = new lime.Sprite();
 	this.appendChild(movement);
 	
 	this.select = function() {
-		if(happyball.selectedPlayer)
-			happyball.selectedPlayer.deselect();
+		if(!this.game_vars.moved) {
+			if(happyball.selectedPlayer)
+				happyball.selectedPlayer.deselect();
 
-		happyball.selectedPlayer = this;
-		player_menu.setHidden(false);
+			happyball.selectedPlayer = this;
+			this.appendChild(player_menu);
+		}
 	}
+
 	this.deselect = function() {
-		player_menu.setHidden(true);
+		this.removeChild(player_menu);
 		movement.removeAllChildren();
+		happyball.selectedPlayer = null;
+	}
+
+	this.createMove = function(column, row) {
+		this.deselect();
+		var x = column*50;
+		var y = row*50;
+		var next_move_marker = happyball.createLine(3, 25, 25, x+25, y+25).setFill('#B69E67');
+		this.appendChild(next_move_marker);
+		this.game_vars.next_move = {column: column, row: row};
+		this.game_vars.moved = true;
 	}
 
 	this.showMovement = function() {
-		player_menu.setHidden(true);
+		this.removeChild(player_menu);
 		
-		for (var i = 1; i <= this.stats.distance; i++) {
+		for (var i = 1; i <= this.game_vars.stats.distance; i++) {
 			// east
 			var sq = new happyball.Square(i, 0);
 			movement.appendChild(sq);
@@ -84,12 +103,14 @@ happyball.Player = function() {
 
 	// Mousehover function
 	goog.events.listen(this, 'mouseover', function(e) { 
-		light.setHidden(false);
+		if(!this.game_vars.moved)
+			light.setHidden(false);
 
 		var key = goog.events.listen(this.getParent(), 'mousemove', function(e) {
 			if (!this.hitTest(e))
 			{
-				light.setHidden(true);
+				if(!this.game_vars.moved)
+					light.setHidden(true);
 				goog.events.unlistenByKey(key);
 			}	
 
@@ -98,7 +119,8 @@ happyball.Player = function() {
 	});
 	
 	goog.events.listen(this,['mousedown','touchstart'],function(e){
-		this.select();
+		if(!this.game_vars.moved)
+			this.select();
 		e.event.stopPropagation();
 	},false,this)
 }
