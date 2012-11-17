@@ -248,7 +248,7 @@ var calculateMovesForTime = function (offense,defense,time) {
     defense = teams[1];
     if(team) {
       console.log(team);
-      var t = .2;
+      var t = .5;
       var x = player.location.column;
       var y = player.location.row;
       var tackleArray = [[x,y],[x+t,y],[x-t,y],[x,y+t],[x,y-t],[x-t,y-t]];
