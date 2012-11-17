@@ -195,8 +195,8 @@ happyball.generateTeam = function(opponent) {
 
 	for(var i=0; i<GAME_TYPES[0].positions.length; i++) {
 		var newPlayer = new happyball.Player(true);
-		if(happyball.game.type == 1)
-			newPlayer.setScale(-1, 1);
+		//if(happyball.game.type == 1)
+			//newPlayer.setScale(-1, 1);
 		newPlayer.game_vars.id = happyball.my_team.length;
 		newPlayer.game_vars.location = happyball.generatePlayerPosition();
 		newPlayer.game_vars.stats = GAME_TYPES[happyball.game.type].positions[i];
@@ -219,7 +219,7 @@ happyball.generateTeam = function(opponent) {
 happyball.teamToJson = function(team) {
 	var json_team = [];
 
-	for (var i = team.length - 1; i >= 0; i--) {
+	for (var i = 0; i < team.length; i++) {
 		var player = team[i].game_vars;
 		json_team.push(player);
 	};
@@ -250,7 +250,7 @@ socket.on('new_turn', function (data) {
 		happyball.my_team[i].game_vars = data.team[i];
 		happyball.my_team[i].moveToPosition();
 	};
-
+	
 	for (var i = data.other_team.length - 1; i >= 0; i--) {
 		happyball.opponent_team[i].game_vars = data.other_team[i];
 		happyball.opponent_team[i].moveToPosition();
@@ -263,8 +263,8 @@ socket.on('new_turn', function (data) {
 happyball.renderOpponentTeam = function(team) {
 	for (var i = team.length - 1; i >= 0; i--) {
 		var newPlayer = new happyball.Player(false);
-		if(happyball.game.type == 0)
-			newPlayer.setScale(-1, 1);
+		//if(happyball.game.type == 0)
+			//newPlayer.setScale(-1, 1);
 		newPlayer.game_vars = team[i];
 		happyball.opponent_team.push(newPlayer);
 	};

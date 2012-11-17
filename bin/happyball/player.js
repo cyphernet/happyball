@@ -102,13 +102,6 @@ happyball.Player = function(my_player) {
 			};
 		}
 
-		this.moveToPosition = function() {
-			var x = 200 + this.game_vars.location.column*50;
-			var y = 220 + this.game_vars.location.row*50;
-
-			this.setPosition(x, y);
-		}
-
 		// Mousehover function
 		goog.events.listen(this, 'mouseover', function(e) { 
 			if(!this.game_vars.moved)
@@ -131,6 +124,15 @@ happyball.Player = function(my_player) {
 				this.select();
 			e.event.stopPropagation();
 		},false,this);
+	}
+
+	this.moveToPosition = function() {
+		var x = 200 + this.game_vars.location.column*50;
+		var y = 220 + this.game_vars.location.row*50;
+
+		this.setPosition(x, y);
+		this.removeChild(this.next_move_marker);
+		this.moved = false;
 	}
 }
 goog.inherits(happyball.Player, lime.Sprite);
