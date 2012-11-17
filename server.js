@@ -57,48 +57,6 @@ io.sockets.on('connection', function (socket) {
     var other_player = rooms[socket.room_id].complete;
     if(other_player) {
 
-/*      data.game_state.turn++;
-      other_player.game_state.turn++;
-
-      // Move both teams players
-      for (var i = data.team.length - 1; i >= 0; i--) {
-        if(data.team[i].next_move != -1)
-          data.team[i].location = data.team[i].next_move;
-      
-        if(other_player.team[i].next_move != -1)
-         other_player.team[i].location = other_player.team[i].next_move;
-       
-        data.team[i].next_move = -1;
-        other_player.team[i].next_move = -1;
-      };
-
-      var ball = null;
-      //Move Da balls
-      if(data.ball.next_move != -1) {
-        ball = data.ball;
-      } else if (other_player.ball.next_move != -1) {
-        ball = other_player.ball;
-      }
-    
-      if(ball) {
-        data.ball.location =  ball.next_move;
-        other_player.ball.location = ball.next_move;
-        data.ball.next_move = -1;
-        other_player.ball.next_move = -1;
-
-        for (var i = data.team.length - 1; i >= 0; i--) {
-          data.team[i].hasBall =  0;
-          other_player.team[i].hasBall =  0;
-          //Ball Catching super simple logic
-          if(data.team[i].location === ball.location)
-            data.team[i].hasBall = 1;
-          else if(other_player.team[i].location === ball.location)
-            other_player.team[i].hasBall = 1;
-          
-          console.log(ball.location + ' :: ' + data.team[i].location + ' ' + data.team[i].hasBall + ' : ' + other_player.team[i].location + ' '  + other_player.team[i].hasBall);
-        }
-
-      }*/
       var teams = calculateMovesForTime(data.team,other_player.team,10);
       
       data.team = teams[0];
@@ -125,7 +83,7 @@ var getPos = function (p, t) {
   current_y = p.location.row;
   new_x = current_x;
   new_y = current_y;
-  if(p.next_move !== -1) {
+  if(p.next_move !== -1 && p.tackled !== 1) {
     next_x = p.next_move.column;
     next_y = p.next_move.row;
     speed = p.stats.speed;
@@ -264,7 +222,55 @@ var calculateMovesForTime = function (offense,defense,time) {
     teams = calculateMoves(offense,defense,TIMELAPSE);
     offense = teams[0];
     defense = teams[1];
+
+    //Logic determine tackles
+    //get player with ball
+    var side, player, team, playerIndex;
+    for(var i = offense.length; i>=0; i--) {
+      if(offense[i].hasBall === 1) {
+        side = 'offense';
+        player = offense[i];
+        playerIndex = i;
+        break;
+      }
+      else if(defense[i].hasBall === 1) {
+        side = 'defense';
+        player = defense[i];
+        playerIndex = i;
+        break;
+      }
+    }
+    if(side == 'defense') {
+      team = offense;
+    }
+    else if(side == 'offense') {
+      team = defense;
+    }
+    if(team) {
+      var t = COLLISION_TOLERANCE;
+      var x = player.location.column;
+      var y = player.location.row;
+      var tackleArray = [[x,y],[x+t,y],[x-t,y],[x,y+t],[x,y-t]];
+      player.tackled = (function () {
+        for(var i = team.length; i>=0; i--) {
+          for(var j = tackleArray.length; i>=0; i--) {
+            if((team[i].location.column - tackleArray[j][0]) <= TOLERANCE && (team[i].location.row - tackleArray[j][1]) <= TOLERANCE) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }());
+
+      if(side == 'offense') {
+        offense[playerIndex] = player;
+      }
+      else if (side == 'defense') {
+        defense[playerIndex] = player;
+      }
+    }  
   }
+
   return [offense, defense];
 }
 
