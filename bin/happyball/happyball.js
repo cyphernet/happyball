@@ -14,6 +14,7 @@ goog.require('lime.SpriteSheet');
 goog.require('lime.Button');
 goog.require('lime.ASSETS.player.plist')
 goog.require('lime.animation.MoveBy');
+goog.require('lime.animation.FadeTo');
 goog.require('lime.transitions.SlideIn');
 goog.require('happyball.Player');
 goog.require('happyball.Football');
@@ -167,7 +168,11 @@ happyball.start = function(){
 	happyball.game_layer = new lime.Layer();
 	gamescene.appendChild(happyball.game_layer);
 
-	var field = new lime.Sprite().setSize(1400, 555).setFill('assets/field.png').setPosition(0, 185).setAnchorPoint(0,0);
+	// notification_layer
+	happyball.notification_layer = new lime.Layer();
+	gamescene.appendChild(happyball.notification_layer);
+
+	var field = new lime.Sprite().setSize(1400, 555).setFill('assets/field.png').setPosition(0, 185).setAnchorPoint(0,0).setRenderer(lime.Renderer.CANVAS);
 	happyball.game_layer.appendChild(field);
 
 	// Players sprite sheet
@@ -238,7 +243,7 @@ happyball.end_turn = function(hud_layer) {
 			ball: happyball.getFootballVars()
 		});
 		happyball.game.turn_end = true;
-		happyball.game_log('game_log', 'Waiting for opponent');
+		happyball.showMessage('Waiting for opponent');
 	}
 }
 
@@ -252,7 +257,6 @@ happyball.getFootballVars = function() {
 }
 
 socket.on('new_turn', function (data) {
-	happyball.game_log('game_log', 'Turn '+data.game_state.turn+'!');
 	happyball.game = data.game_state;
 
 	// ANIMATE DUDES!
@@ -268,6 +272,7 @@ socket.on('new_turn', function (data) {
 
 
 	happyball.game.turn_end = false;
+	happyball.hideMessage();
 });
 
 happyball.createTeam = function(data, my_team) {
@@ -361,9 +366,6 @@ happyball.generateRoom = function(gamescene) {
 		name: 'Anon'
 	});
 
-	happyball.game_log('game_log', 'Game start.');
-	happyball.game_log('game_log', 'Waiting for opponent.');
-
 	if(single_player) {
 		happyball.director.replaceScene(gamescene);
 		happyball.generateTeam(null);
@@ -375,7 +377,8 @@ happyball.generateRoom = function(gamescene) {
 			happyball.director.replaceScene(gamescene);
 			happyball.generateTeam(null);
 			happyball.renderTeam(happyball.my_team);
-			happyball.game_log('game_log', 'You are on '+GAME_TYPES[happyball.game.type].name);
+			var color = (happyball.game.type == 0) ? 'blue' : 'orange';
+			happyball.alert('You are '+color+' '+GAME_TYPES[happyball.game.type].name, 2000);
 		}
 	});
 
@@ -384,32 +387,43 @@ happyball.generateRoom = function(gamescene) {
 			happyball.director.replaceScene(gamescene);
 			happyball.generateTeam(data.game_state.type);
 			happyball.renderTeam(happyball.my_team);
-			happyball.game_log('game_log', 'You are on '+GAME_TYPES[happyball.game.type].name);
+			var color = (happyball.game.type == 0) ? 'blue' : 'orange';
+			happyball.alert('You are '+color+' '+GAME_TYPES[happyball.game.type].name, 2000);
 		}
 		happyball.opponent_team = happyball.createTeam(data.team, false);
 		happyball.renderTeam(happyball.opponent_team);
-		happyball.game_log('game_log', 'opponent is on '+GAME_TYPES[data.game_state.type].name);
 	});
 }
 
-happyball.game_log = function(id, text) {
-	var d = new Date();
-	var date = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds();
-	console.log('['+date+'] '+text);
+happyball.showMessage = function(text) {
+	var size = text.length * 30;
+
+	happyball.message_label = new lime.Label().setText(text)
+				.setFontSize(30).setFontColor('#000').setFill('#fff000').setStroke(2,'#000')
+				.setSize(size, 80).setAlign('center').setPadding(3).setAnchorPoint(0,0).setPosition(650-size/2, 250).setRenderer(lime.Renderer.CANVAS);
+	happyball.notification_layer.appendChild(happyball.message_label);
+}
+
+happyball.hideMessage = function() {
+	happyball.notification_layer.removeChild(happyball.message_label);
 }
 
 happyball.alert = function(text, time) {
 
-	this.stats_label = new lime.Label().setText(this.game_vars.stats.position + ' :: Level ' + this.game_vars.level)
-				.setFontSize(16).setFontColor('#000').setFill('#c12a2a').setStroke(2,'#000')
-				.setSize(170, 30).setAlign('center').setPadding(3).setAnchorPoint(0,0).setPosition(-50, -35);
-			this.appendChild(this.stats_label);
-	
-	lime.scheduleManager.callAfter(function(dt){
-	    var position = this.getPosition();
-	    position.x += velocity * dt; // if dt is bigger we just move more
-	    this.setPosition(position); 
-	},ball);
+	var size = text.length * 30;
+
+	happyball.alert_label = new lime.Label().setText(text)
+				.setFontSize(30).setFontColor('#000').setFill('#fff000').setStroke(2,'#000')
+				.setSize(size, 80).setAlign('center').setPadding(3).setAnchorPoint(0,0).setPosition(650-size/2, 250).setRenderer(lime.Renderer.CANVAS);
+	happyball.notification_layer.appendChild(happyball.alert_label);
+
+	lime.scheduleManager.callAfter(function(){
+		var fadeout = new lime.animation.FadeTo(0);
+		happyball.alert_label.runAction(fadeout);
+		goog.events.listen(fadeout,lime.animation.Event.STOP,function(){
+			happyball.notification_layer.removeChild(happyball.alert_label);
+		});
+	}, happyball, time);
 }
 
 happyball.createId = function() {

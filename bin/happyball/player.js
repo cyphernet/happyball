@@ -14,8 +14,7 @@ happyball.Player = function(my_player) {
 	else
 		var color = (happyball.game.type == 0) ? 'left_orange' : 'right_blue';
 
-	this.setFill(happyball.player_sprites.getFrame('idle_'+color+'_1.png'));
-	this.setAnchorPoint(0, 0);
+	this.setFill(happyball.player_sprites.getFrame('idle_'+color+'_1.png')).setAnchorPoint(0, 0);
 	
 	
 	// show if player is selected

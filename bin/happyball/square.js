@@ -17,7 +17,7 @@ happyball.Square = function(column, row, object) {
 	if(new_x < 20 && new_y < 10 && new_x > -1 && new_y > -1)
 		this.setSize(50,50).setFill(255, 217, 102, .4).setPosition(x, y).setAnchorPoint(0, 0);
 
-	var line_to_player = happyball.createLine(3, 25, 25, (-x)+25, (-y)+25).setFill('#000').setHidden(true);
+	var line_to_player = happyball.createLine(3, 25, 25, (-x)+25, (-y)+25).setFill('#000').setHidden(true).setRenderer(lime.Renderer.CANVAS);
 	this.appendChild(line_to_player);
 
 	// Mousehover function
