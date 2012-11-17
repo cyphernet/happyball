@@ -76,7 +76,7 @@ io.sockets.on('connection', function (socket) {
   
 });
 
-var TOLERANCE = .01, COLLISION_TOLERANCE = .5, TIMELAPSE=.2;
+var TOLERANCE = .01, COLLISION_TOLERANCE = .5, TIMELAPSE=.2, TACKLE_RANGE=.95;
 var getPos = function (p, t) {
   var current_x, current_y, next_x, next_y, speed, diff_x, diff_y, dir_x, dir_y, new_x, new_y;
   current_x = p.location.column;
@@ -217,57 +217,61 @@ var calculateMoves = function (offense,defense,t) {
 }
 
 var calculateMovesForTime = function (offense,defense,time) {
-  var teams = [];
+  //Logic determine tackles
+  //get player with ball
+  var side, player, team, playerIndex, teams = [];
+
+  for(var i = offense.length-1; i>=0; i--) {
+    if(offense[i].hasBall === 1) {
+      side = 'offense';
+      player = offense[i];
+      playerIndex = i;
+      break;
+    }
+    else if(defense[i].hasBall === 1) {
+      side = 'defense';
+      player = defense[i];
+      playerIndex = i;
+      break;
+    }
+  }
+  if(side == 'defense') {
+    team = offense;
+  }
+  else if(side == 'offense') {
+    team = defense;
+  }
+
   for (var i = time-1; i >=0; i--) {
     teams = calculateMoves(offense,defense,TIMELAPSE);
     offense = teams[0];
     defense = teams[1];
-
-    //Logic determine tackles
-    //get player with ball
-    var side, player, team, playerIndex;
-    for(var i = offense.length; i>=0; i--) {
-      if(offense[i].hasBall === 1) {
-        side = 'offense';
-        player = offense[i];
-        playerIndex = i;
-        break;
-      }
-      else if(defense[i].hasBall === 1) {
-        side = 'defense';
-        player = defense[i];
-        playerIndex = i;
-        break;
-      }
-    }
-    if(side == 'defense') {
-      team = offense;
-    }
-    else if(side == 'offense') {
-      team = defense;
-    }
     if(team) {
-      var t = COLLISION_TOLERANCE;
+      console.log(team);
+      var t = .1;
       var x = player.location.column;
       var y = player.location.row;
-      var tackleArray = [[x,y],[x+t,y],[x-t,y],[x,y+t],[x,y-t]];
+      var tackleArray = [[x,y],[x+t,y],[x-t,y],[x,y+t],[x,y-t],[x-t,y-t]];
       player.tackled = (function () {
-        for(var i = team.length; i>=0; i--) {
-          for(var j = tackleArray.length; i>=0; i--) {
-            if((team[i].location.column - tackleArray[j][0]) <= TOLERANCE && (team[i].location.row - tackleArray[j][1]) <= TOLERANCE) {
+        for(var j = team.length-1; j>=0; j--) {
+          for(var k = tackleArray.length-1; k>=0; k--) {
+            console.log(Math.abs(team[j].location.column - tackleArray[k][0]) + ' : ' + Math.abs(team[j].location.row - tackleArray[k][1]));
+            if(Math.abs(team[j].location.column - tackleArray[k][0]) <= COLLISION_TOLERANCE && Math.abs(team[j].location.row - tackleArray[k][1]) <= COLLISION_TOLERANCE) {
+              console.log('tackled!!');
               return true;
             }
           }
         }
         return false;
       }());
-
       if(side == 'offense') {
         offense[playerIndex] = player;
       }
       else if (side == 'defense') {
         defense[playerIndex] = player;
       }
+      if(player.tackled)
+        console.log(player);
     }  
   }
 
