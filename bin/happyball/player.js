@@ -9,15 +9,6 @@ happyball.Player = function(my_player) {
 	
 	goog.base(this);
 
-	this.game_vars = {
-		id: 0,
-		level: 1,
-		location: 0,
-		next_move: -1,
-		hasBall: 0,
-		moved: false
-	};
-
 	if(my_player)
 		var color = (happyball.game.type == 0) ? 'right_blue' : 'left_orange';
 	else
@@ -40,6 +31,18 @@ happyball.Player = function(my_player) {
 	this.appendChild(movement);
 	
 	if(my_player) {
+
+		this.showStats = function() {
+			this.stats_label = new lime.Label().setText(this.game_vars.stats.position + ' :: Level ' + this.game_vars.level)
+				.setFontSize(16).setFontColor('#000').setFill('#c12a2a').setStroke(2,'#000')
+				.setSize(170, 30).setAlign('center').setPadding(3).setAnchorPoint(0,0).setPosition(-50, -35);
+			this.appendChild(this.stats_label);
+		}
+
+		this.hideStats = function() {
+			this.removeChild(this.stats_label);
+		}
+
 		this.select = function() {
 			if(!this.game_vars.moved) {
 				if(happyball.selectedPlayer)
@@ -47,6 +50,7 @@ happyball.Player = function(my_player) {
 
 				happyball.selectedPlayer = this;
 				this.appendChild(player_menu);
+				this.showStats();
 			}
 		}
 
@@ -54,6 +58,7 @@ happyball.Player = function(my_player) {
 			this.removeChild(player_menu);
 			movement.removeAllChildren();
 			happyball.selectedPlayer = null;
+			this.hideStats();
 		}
 
 		this.createMove = function(column, row) {

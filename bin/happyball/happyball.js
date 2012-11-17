@@ -121,7 +121,7 @@ happyball.start = function(){
 
     var multiplayer_btn = new lime.Button(
          (new lime.Label).setSize(310, 60).setFill('#1E4152').setText(button_text).setFontSize(26).setPadding(5, 20).
-	        setAlign('right').setShadow('#FFF',2,1,1)
+	        setAlign('right')
      ).setPosition(680, 300);
 
      startscene.appendChild(multiplayer_btn);
@@ -183,8 +183,7 @@ happyball.start = function(){
 }
 
 happyball.generateTeam = function(opponent) {
-
-	if(opponent !== undefined) {
+	if(opponent !== null) {
 		if(opponent)
 			happyball.game.type = 0;
 		else
@@ -200,6 +199,8 @@ happyball.generateTeam = function(opponent) {
 		game_vars.location = happyball.generatePlayerPosition(my_team);
 		game_vars.stats = GAME_TYPES[happyball.game.type].positions[i];
 		game_vars.next_move = -1;
+		game_vars.hasBall = 0;
+		game_vars.level = 1;
 		if(game_vars.stats.position === 'qb') {
 			game_vars.hasBall = 1;
 		}
@@ -313,7 +314,7 @@ happyball.generatePlayerPosition = function(team) {
 
 happyball.isPlayerHere = function(pos, team) {
 	for (var i = 0; i < team.length; i++) {
-		if(team[i].location == pos)
+		if(team[i].location.column == pos.column && team[i].location.row == pos.row)
 			return true;
 	};
 	return false;
@@ -395,6 +396,20 @@ happyball.game_log = function(id, text) {
 	var d = new Date();
 	var date = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds();
 	console.log('['+date+'] '+text);
+}
+
+happyball.alert = function(text, time) {
+
+	this.stats_label = new lime.Label().setText(this.game_vars.stats.position + ' :: Level ' + this.game_vars.level)
+				.setFontSize(16).setFontColor('#000').setFill('#c12a2a').setStroke(2,'#000')
+				.setSize(170, 30).setAlign('center').setPadding(3).setAnchorPoint(0,0).setPosition(-50, -35);
+			this.appendChild(this.stats_label);
+	
+	lime.scheduleManager.callAfter(function(dt){
+	    var position = this.getPosition();
+	    position.x += velocity * dt; // if dt is bigger we just move more
+	    this.setPosition(position); 
+	},ball);
 }
 
 happyball.createId = function() {
