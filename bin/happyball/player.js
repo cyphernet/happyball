@@ -66,36 +66,36 @@ happyball.Player = function(my_player) {
 			this.game_vars.moved = true;
 		}
 
-		this.showMovement = function(distance) {
+		this.showMovement = function(distance, object) {
 			this.removeChild(player_menu);
 			
 			for (var i = 1; i <= distance; i++) {
 				// east
-				var sq = new happyball.Square(i, 0);
+				var sq = new happyball.Square(i, 0, object);
 				movement.appendChild(sq);
 
 				// south
-				var sq = new happyball.Square(0, i);
+				var sq = new happyball.Square(0, i, object);
 				movement.appendChild(sq);
 
 				// north
-				var sq = new happyball.Square(0, i*-1);
+				var sq = new happyball.Square(0, i*-1, object);
 				movement.appendChild(sq);
 
 				// west
-				var sq = new happyball.Square(i*-1, 0);
+				var sq = new happyball.Square(i*-1, 0, object);
 				movement.appendChild(sq);
 
-				var sq = new happyball.Square(i, i);
+				var sq = new happyball.Square(i, i, object);
 				movement.appendChild(sq);
 
-				var sq = new happyball.Square(i, i*-1);
+				var sq = new happyball.Square(i, i*-1, object);
 				movement.appendChild(sq);
 
-				var sq = new happyball.Square(i*-1, i*-1);
+				var sq = new happyball.Square(i*-1, i*-1, object);
 				movement.appendChild(sq);
 
-				var sq = new happyball.Square(i*-1, i);
+				var sq = new happyball.Square(i*-1, i, object);
 				movement.appendChild(sq);
 			};
 		}
@@ -156,7 +156,6 @@ happyball.Player = function(my_player) {
 		
 		goog.events.listen(move,lime.animation.Event.STOP,function(){
 			running.stop();
-			console.log(this);
 			this.targets[0].showIdle();
 		})
 

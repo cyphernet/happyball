@@ -205,7 +205,7 @@ happyball.generateTeam = function(opponent) {
 		}
 		my_team.push(game_vars);
 	}
-	console.log(my_team);
+
 	happyball.my_team = happyball.createTeam(my_team, true);
 	socket.emit('team', {
 		name: 'Anon',
@@ -234,11 +234,20 @@ happyball.end_turn = function(hud_layer) {
 			name: 'Anon', 
 			game_state: happyball.game,
 			team: team,
-			ball: 'football?'
+			ball: happyball.getFootballVars()
 		});
 		happyball.game.turn_end = true;
 		happyball.game_log('game_log', 'Waiting for opponent');
 	}
+}
+
+happyball.getFootballVars = function() {
+	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
+		if(happyball.my_team[i].game_vars.hasBall === 1)
+			return happyball.my_team[i].ball.game_vars;
+
+	return null;
+	};
 }
 
 socket.on('new_turn', function (data) {
@@ -282,6 +291,7 @@ happyball.renderTeam = function(team) {
 		happyball.game_layer.appendChild(team[i]);
 		if(team[i].game_vars.hasBall === 1) {
 			team[i].appendChild(team[i].ball);
+			team[i].ball.game_vars.location = team[i].game_vars.location;
 		}
 	};
 }
@@ -307,37 +317,6 @@ happyball.isPlayerHere = function(pos, team) {
 			return true;
 	};
 	return false;
-}
-
-happyball.moveToPosition = function(player, pos){
-		
-	var delta = goog.math.Coordinate.difference(pos,player.getPosition()),
-		angle = Math.atan2(-delta.y,delta.x);
-	
-	//determine the direction    
-	var dir = Math.round(angle/(Math.PI*2)*8);
-	var dirs = ['e','ne','n','nw','w','sw','s','se'];
-	if(dir<0) dir=8+dir;
-	dir = dirs[dir];
-	
-	//move
-	var move = new lime.animation.MoveBy(delta).setEasing(lime.animation.Easing.LINEAR).setSpeed(2);
-	player.runAction(move);
-	
-	// show animation
-	//var anim = new lime.animation.KeyframeAnimation();
-	//anim.delay= 1/7;
-	//for(var i=1;i<=7;i++){
-	//    anim.addFrame(test.ss.getFrame('walking-'+dir+'000'+i+'.png'));
-	//}
-   // player.runAction(anim);
-	
-	// on stop show front facing
-	goog.events.listen(move,lime.animation.Event.STOP,function(){
-	  //  anim.stop();
-		//player.setFill(test.ss.getFrame('walking-s0001.png'));
-	})
-	
 }
 
 happyball.createLine = function(size, x1, y1, x2, y2) { 
@@ -371,8 +350,6 @@ happyball.checkGameExists = function() {
 happyball.generateRoom = function(gamescene) {
 	var single_player = false;
 	
-	//football = new Football();
-
 	if(happyball.host) {
 		window.location.hash = happyball.game.id;
 	}

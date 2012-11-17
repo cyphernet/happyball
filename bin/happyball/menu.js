@@ -47,9 +47,9 @@ happyball.Menu = function(player) {
 		// Click event
 		goog.events.listen(lbl,['mousedown','touchstart'],function(e){
 			if(txt == 'move' && happyball.selectedPlayer)
-				happyball.selectedPlayer.showMovement(player.game_vars.stats.distance);
+				happyball.selectedPlayer.showMovement(player.game_vars.stats.distance, 'player');
 			if(txt == 'throw')
-				happyball.selectedPlayer.showMovement(player.game_vars.stats.skill);
+				happyball.selectedPlayer.showMovement(player.game_vars.stats.skill, 'ball');
 			e.event.stopPropagation();
 		},false,lbl);
 
@@ -60,7 +60,6 @@ happyball.Menu = function(player) {
     var lbl = this.createMenuItem('move');
     container.appendChild(lbl);
     
-console.log(player.game_vars);
     if(player.game_vars.hasBall === 1 && player.game_vars.stats.position == 'qb') {
 
 	    var lbl = this.createMenuItem('throw');

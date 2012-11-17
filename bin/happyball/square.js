@@ -3,7 +3,7 @@ goog.provide('happyball.Square');
 goog.require('lime.Sprite');
 goog.require('lime.Polygon');
 
-happyball.Square = function(column, row) {
+happyball.Square = function(column, row, object) {
 	goog.base(this);
 
 	var x = column*50;
@@ -37,7 +37,10 @@ happyball.Square = function(column, row) {
 
 	// Click event
 	goog.events.listen(this,['mousedown','touchstart'],function(e){
-		happyball.selectedPlayer.createMove(column, row);
+		if(object == 'ball')
+			happyball.selectedPlayer.ball.createMove(column, row);
+		else
+			happyball.selectedPlayer.createMove(column, row);
 		e.event.stopPropagation();
 	},false,this);
 }
