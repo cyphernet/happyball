@@ -130,7 +130,10 @@ happyball.Player = function(my_player) {
 		var x = 200 + this.game_vars.location.column*50;
 		var y = 220 + this.game_vars.location.row*50;
 
-		this.setPosition(x, y);
+
+		var move = new lime.animation.MoveTo (x, y).setEasing(lime.animation.Easing.EASEINOUT).setSpeed(.5);
+		this.runAction(move);
+
 		this.removeChild(this.next_move_marker);
 		this.game_vars.moved = false;
 	}

@@ -261,14 +261,14 @@ socket.on('new_turn', function (data) {
 });
 
 happyball.renderOpponentTeam = function(team) {
-	for (var i = team.length - 1; i >= 0; i--) {
+	for (var i = 0; i < team.length; i++) {
 		var newPlayer = new happyball.Player(false);
 		//if(happyball.game.type == 0)
 			//newPlayer.setScale(-1, 1);
 		newPlayer.game_vars = team[i];
 		happyball.opponent_team.push(newPlayer);
 	};
-
+	
 	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
 		var x = 200 + happyball.opponent_team[i].game_vars.location.column*50;
 		var y = 220 + happyball.opponent_team[i].game_vars.location.row*50;
@@ -278,7 +278,7 @@ happyball.renderOpponentTeam = function(team) {
 }
 
 happyball.renderTeam = function(team) {
-	for (var i = team.length - 1; i >= 0; i--) {
+	for (var i = 0; i < team.length; i++) {
 		var x = 200 + team[i].game_vars.location.column*50;
 		var y = 220 + team[i].game_vars.location.row*50;
 		team[i].setPosition(x, y);
