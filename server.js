@@ -99,6 +99,8 @@ io.sockets.on('connection', function (socket) {
         }
 
       }*/
+      console.log(data.team);
+      console.log(other_player.team);
       var teams = calculateMovesForTime(data.team,other_player.team,10);
       
       data.team = teams[0];
@@ -133,38 +135,40 @@ var getPos = function (p, t) {
   diff_y = next_y - current_y;  //pos goes up, neg goes down
   new_x = current_x;
   new_y = current_y;
-  //Calculate direction for x and y
-  if(diff_x !== 0)
-    dir_x = diff_x / (Math.abs(diff_x));
-  else
-    dir_x = 1;
-  if(diff_x !== 0)
-    dir_y = diff_y / (Math.abs(diff_y));
-  else 
-    dir_y = 1;
-  //y coordinate movement
-  if (Math.abs(diff_y) > TOLERANCE) { 
-    new_y = current_y + (t*speed*dir_y);
-    //Make sure next move does not go past target location.
-    if(dir_y > 0 && new_y > next_y)
-      new_y = next_y;
-    else if(dir_y < 0 && new_y < next_y)
-      new_y = next_y;
-    //if next move is within tolerance set it to next_y
-    if(Math.abs(new_y - next_y) <= TOLERANCE)
-      new_y = next_y;
-  }
-  //x coordinate movement
-  if (Math.abs(diff_x) > TOLERANCE) {  
-    new_x = current_x + (t*speed*dir_x);
-    //Make sure next move does not go past target location.
-    if(dir_x > 0 && new_x > next_x)
-      new_x = next_x;
-    else if(dir_x < 0 && new_x < next_x)
-      new_x = next_x;
-    //if next move is within tolerance set it to next_y
-    if(Math.abs(new_x - next_x) <= TOLERANCE)
-      new_x = next_x;
+  if(p.next_move !== -1) {
+    //Calculate direction for x and y
+    if(diff_x !== 0)
+      dir_x = diff_x / (Math.abs(diff_x));
+    else
+      dir_x = 1;
+    if(diff_x !== 0)
+      dir_y = diff_y / (Math.abs(diff_y));
+    else 
+      dir_y = 1;
+    //y coordinate movement
+    if (Math.abs(diff_y) > TOLERANCE) { 
+      new_y = current_y + (t*speed*dir_y);
+      //Make sure next move does not go past target location.
+      if(dir_y > 0 && new_y > next_y)
+        new_y = next_y;
+      else if(dir_y < 0 && new_y < next_y)
+        new_y = next_y;
+      //if next move is within tolerance set it to next_y
+      if(Math.abs(new_y - next_y) <= TOLERANCE)
+        new_y = next_y;
+    }
+    //x coordinate movement
+    if (Math.abs(diff_x) > TOLERANCE) {  
+      new_x = current_x + (t*speed*dir_x);
+      //Make sure next move does not go past target location.
+      if(dir_x > 0 && new_x > next_x)
+        new_x = next_x;
+      else if(dir_x < 0 && new_x < next_x)
+        new_x = next_x;
+      //if next move is within tolerance set it to next_y
+      if(Math.abs(new_x - next_x) <= TOLERANCE)
+        new_x = next_x;
+    }
   }
   return {column: new_x, row: new_y};
 }
