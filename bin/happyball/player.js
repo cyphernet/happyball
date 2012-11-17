@@ -102,6 +102,13 @@ happyball.Player = function(my_player) {
 			};
 		}
 
+		this.moveToPosition = function() {
+			var x = 200 + this.game_vars.location.column*50;
+			var y = 220 + this.game_vars.location.row*50;
+
+			this.setPosition(x, y);
+		}
+
 		// Mousehover function
 		goog.events.listen(this, 'mouseover', function(e) { 
 			if(!this.game_vars.moved)

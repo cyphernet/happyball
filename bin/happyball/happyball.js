@@ -246,6 +246,16 @@ socket.on('new_turn', function (data) {
 	happyball.game = data.game_state;
 
 	// ANIMATE DUDES!
+	for (var i = data.team.length - 1; i >= 0; i--) {
+		happyball.my_team[i].game_vars = data.team[i];
+		happyball.my_team[i].moveToPosition();
+	};
+
+	for (var i = data.other_team.length - 1; i >= 0; i--) {
+		happyball.opponent_team[i].game_vars = data.other_team[i];
+		happyball.opponent_team[i].moveToPosition();
+	};
+
 
 	happyball.game.turn_end = false;
 });
@@ -311,7 +321,7 @@ happyball.moveToPosition = function(player, pos){
 	dir = dirs[dir];
 	
 	//move
-	var move =new lime.animation.MoveBy(delta).setEasing(lime.animation.Easing.LINEAR).setSpeed(2);
+	var move = new lime.animation.MoveBy(delta).setEasing(lime.animation.Easing.LINEAR).setSpeed(2);
 	player.runAction(move);
 	
 	// show animation
