@@ -123,7 +123,7 @@ io.sockets.on('connection', function (socket) {
   
 });
 
-var TOLERANCE = .1, COLLISION_TOLERANCE = .5, TIMELAPSE=.5;
+var TOLERANCE = .01, COLLISION_TOLERANCE = .5, TIMELAPSE=.2;
 var getPos = function (p, t) {
   var current_x, current_y, next_x, next_y, speed, diff_x, diff_y, dir_x, dir_y, new_x, new_y;
   current_x = p.location.column;
@@ -146,7 +146,7 @@ var getPos = function (p, t) {
     else 
       dir_y = 1;
     //y coordinate movement
-    if (Math.abs(diff_y) > TOLERANCE) { 
+    if (Math.abs(diff_y) >= TOLERANCE) { 
       new_y = current_y + (t*speed*dir_y);
       //Make sure next move does not go past target location.
       if(dir_y > 0 && new_y > next_y)
@@ -158,7 +158,7 @@ var getPos = function (p, t) {
         new_y = next_y;
     }
     //x coordinate movement
-    if (Math.abs(diff_x) > TOLERANCE) {  
+    if (Math.abs(diff_x) >= TOLERANCE) {  
       new_x = current_x + (t*speed*dir_x);
       //Make sure next move does not go past target location.
       if(dir_x > 0 && new_x > next_x)
@@ -194,43 +194,55 @@ var calculateMoves = function (offense,defense,t) {
     off_collision_y = false;
     def_collision_x = false;
     def_collision_y = false;
-    for (var j = def_pos.length-1; j >=0; j--) {
+    for (var j = def_pos.length-1; j >= 0; j--) {
       // Offense vs Defense Collision detect     
-      // On X Axis
-      if(Math.abs(off_pos[i].column - def_pos[j].column) < COLLISION_TOLERANCE) {
-        off_collision_x = true;
+      if(Math.abs(off_pos[i].column - def_pos[j].column) <= COLLISION_TOLERANCE) {
+        if(Math.abs(off_pos[i].row - def_pos[j].row) <= COLLISION_TOLERANCE) {
+          off_collision_y = true;
+        }
       }
-      // On Y Axis
-      if(Math.abs(off_pos[i].row - def_pos[j].row) < COLLISION_TOLERANCE) {
-        off_collision_y = true;
+
+      if(Math.abs(off_pos[i].row - def_pos[j].row) <= COLLISION_TOLERANCE) {
+        if(Math.abs(off_pos[i].column - def_pos[j].column) <= COLLISION_TOLERANCE) {
+          off_collision_x = true;
+        }
       }
       // Defense vs Offense Collision detect     
-      // On X Axis
-      if(Math.abs(def_pos[i].column - off_pos[j].column) < COLLISION_TOLERANCE) {
-        def_collision_x = true;
+      if(Math.abs(def_pos[i].column - off_pos[j].column) <= COLLISION_TOLERANCE) {
+        if(Math.abs(def_pos[i].row - off_pos[j].row) <= COLLISION_TOLERANCE) {
+          def_collision_y = true;
+        }
+        
       }
-      // On Y Axis
-      if(Math.abs(def_pos[i].row - off_pos[j].row) < COLLISION_TOLERANCE) {
-        def_collision_y = true;
+      if(Math.abs(def_pos[i].row - off_pos[j].row) <= COLLISION_TOLERANCE) {
+        if(Math.abs(def_pos[i].column - off_pos[j].column) <= COLLISION_TOLERANCE) {
+          def_collision_x = true;
+        }
       }
       // Offense vs Offense Collision detect 
       if(i !== j) {
-        // On X Axis
-        if(Math.abs(off_pos[i].column - off_pos[j].column) < COLLISION_TOLERANCE) {
-          off_collision_x = true;
+        if(Math.abs(off_pos[i].column - off_pos[j].column) <= COLLISION_TOLERANCE) {
+          if(Math.abs(off_pos[i].row - off_pos[j].row) <= COLLISION_TOLERANCE) {
+            off_collision_y = true;
+          }
         }
-        // On Y Axis
-        if(Math.abs(off_pos[i].row - off_pos[j].row) < COLLISION_TOLERANCE) {
-          off_collision_y = true;
+        if(Math.abs(off_pos[i].row - off_pos[j].row) <= COLLISION_TOLERANCE) {
+          if(Math.abs(off_pos[i].column - off_pos[j].column) <= COLLISION_TOLERANCE) {
+            off_collision_x = true;
+          }
         }
       }
       // Defense vs Defense Collision detect
       if(i !== j) {
-        if(Math.abs(def_pos[i].column - def_pos[j].column) < COLLISION_TOLERANCE) {
-          def_collision_x = true;
+        if(Math.abs(def_pos[i].column - def_pos[j].column) <= COLLISION_TOLERANCE) {
+          if(Math.abs(def_pos[i].row - def_pos[j].row) <= COLLISION_TOLERANCE) {
+            def_collision_y = true;
+          }
         }
-        if(Math.abs(def_pos[i].row - def_pos[j].row) < COLLISION_TOLERANCE) {
-          def_collision_y = true;
+        if(Math.abs(def_pos[i].row - def_pos[j].row) <= COLLISION_TOLERANCE) {
+          if(Math.abs(def_pos[i].column - def_pos[j].column) <= COLLISION_TOLERANCE) {
+            def_collision_x = true;
+          }
         }
       }
     }
@@ -260,3 +272,4 @@ var calculateMovesForTime = function (offense,defense,time) {
   }
   return [offense, defense];
 }
+
