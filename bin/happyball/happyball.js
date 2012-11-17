@@ -16,6 +16,7 @@ goog.require('lime.ASSETS.player_idle.plist')
 goog.require('lime.animation.MoveBy');
 goog.require('lime.transitions.SlideIn');
 goog.require('happyball.Player');
+goog.require('happyball.Football');
 
 var GAME_TYPES = [{
 		name: 'offense',
@@ -189,31 +190,30 @@ happyball.generateTeam = function(opponent) {
 		else
 			happyball.game.type = 1;
 	} else {
-
 		happyball.game.type = randomFromInterval(0, GAME_TYPES.length-1);
 	}
 
+	var my_team = [];
 	for(var i=0; i<GAME_TYPES[0].positions.length; i++) {
-		var newPlayer = new happyball.Player(true);
-		//if(happyball.game.type == 1)
-			//newPlayer.setScale(-1, 1);
-		newPlayer.game_vars.id = happyball.my_team.length;
-		newPlayer.game_vars.location = happyball.generatePlayerPosition();
-		newPlayer.game_vars.stats = GAME_TYPES[happyball.game.type].positions[i];
-		if (newPlayer.game_vars.stats.position === 'qb') {
-			newPlayer.game_vars.hasBall = 1;
-			//happyball.football.location = newPlayer.location;
+		var game_vars = {};
+		game_vars.id = i;
+		game_vars.location = happyball.generatePlayerPosition(my_team);
+		game_vars.stats = GAME_TYPES[happyball.game.type].positions[i];
+		game_vars.next_move = -1;
+		if(game_vars.stats.position === 'qb') {
+			game_vars.hasBall = 1;
 		}
-		happyball.my_team.push(newPlayer);
+		my_team.push(game_vars);
 	}
-
-	var team = happyball.teamToJson(happyball.my_team);
-
+	console.log(my_team);
+	happyball.my_team = happyball.createTeam(my_team, true);
 	socket.emit('team', {
 		name: 'Anon',
-		team: team,
+		team: my_team,
 		game_state: happyball.game
 	});
+
+
 }
 
 happyball.teamToJson = function(team) {
@@ -260,21 +260,18 @@ socket.on('new_turn', function (data) {
 	happyball.game.turn_end = false;
 });
 
-happyball.renderOpponentTeam = function(team) {
-	for (var i = 0; i < team.length; i++) {
-		var newPlayer = new happyball.Player(false);
-		//if(happyball.game.type == 0)
-			//newPlayer.setScale(-1, 1);
-		newPlayer.game_vars = team[i];
-		happyball.opponent_team.push(newPlayer);
+happyball.createTeam = function(data, my_team) {
+	var team = [];
+	for (var i = 0; i < data.length; i++) {
+		var newPlayer = new happyball.Player(my_team);
+		newPlayer.game_vars = data[i];
+		if(newPlayer.game_vars.hasBall === 1) {
+			newPlayer.ball = new happyball.Football();
+		}
+		newPlayer.createMenu();
+		team.push(newPlayer);
 	};
-	
-	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
-		var x = 200 + happyball.opponent_team[i].game_vars.location.column*50;
-		var y = 220 + happyball.opponent_team[i].game_vars.location.row*50;
-		happyball.opponent_team[i].setPosition(x, y);
-		happyball.game_layer.appendChild(happyball.opponent_team[i]);
-	};
+	return team;
 }
 
 happyball.renderTeam = function(team) {
@@ -283,10 +280,13 @@ happyball.renderTeam = function(team) {
 		var y = 220 + team[i].game_vars.location.row*50;
 		team[i].setPosition(x, y);
 		happyball.game_layer.appendChild(team[i]);
+		if(team[i].game_vars.hasBall === 1) {
+			team[i].appendChild(team[i].ball);
+		}
 	};
 }
 
-happyball.generatePlayerPosition = function() {
+happyball.generatePlayerPosition = function(team) {
 	var pos = {column: 0, row: 0};
 	do {
 		if(happyball.game.type == 0)
@@ -296,14 +296,14 @@ happyball.generatePlayerPosition = function() {
 
 		pos.row = randomFromInterval(0, 9);
 
-	} while (happyball.isPlayerHere(pos));
+	} while (happyball.isPlayerHere(pos, team));
 
 	return pos;
 }
 
-happyball.isPlayerHere = function(pos) {
-	for (var i = 0; i < happyball.my_team.length; i++) {
-		if(happyball.my_team[i].game_vars.location == pos)
+happyball.isPlayerHere = function(pos, team) {
+	for (var i = 0; i < team.length; i++) {
+		if(team[i].location == pos)
 			return true;
 	};
 	return false;
@@ -391,7 +391,7 @@ happyball.generateRoom = function(gamescene) {
 		happyball.generateTeam(null);
 		happyball.renderTeam(happyball.my_team);
 	}
-
+	//Generate our team
 	socket.on('opponent', function (data) {
 		if(happyball.host) {
 			happyball.director.replaceScene(gamescene);
@@ -408,7 +408,8 @@ happyball.generateRoom = function(gamescene) {
 			happyball.renderTeam(happyball.my_team);
 			happyball.game_log('game_log', 'You are on '+GAME_TYPES[happyball.game.type].name);
 		}
-		happyball.renderOpponentTeam(data.team);
+		happyball.opponent_team = happyball.createTeam(data.team, false);
+		happyball.renderTeam(happyball.opponent_team);
 		happyball.game_log('game_log', 'opponent is on '+GAME_TYPES[data.game_state.type].name);
 	});
 }

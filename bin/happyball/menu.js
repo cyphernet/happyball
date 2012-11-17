@@ -3,7 +3,7 @@ goog.provide('happyball.Menu');
 goog.require('lime.Sprite');
 goog.require('lime.fill.LinearGradient');
 
-happyball.Menu = function() {
+happyball.Menu = function(player) {
 
 	var gradient = new lime.fill.LinearGradient().
 	        setDirection(1,0,1,1).
@@ -47,7 +47,9 @@ happyball.Menu = function() {
 		// Click event
 		goog.events.listen(lbl,['mousedown','touchstart'],function(e){
 			if(txt == 'move' && happyball.selectedPlayer)
-				happyball.selectedPlayer.showMovement();
+				happyball.selectedPlayer.showMovement(player.game_vars.stats.distance);
+			if(txt == 'throw')
+				happyball.selectedPlayer.showMovement(player.game_vars.stats.skill);
 			e.event.stopPropagation();
 		},false,lbl);
 
@@ -58,9 +60,13 @@ happyball.Menu = function() {
     var lbl = this.createMenuItem('move');
     container.appendChild(lbl);
     
+console.log(player.game_vars);
+    if(player.game_vars.hasBall === 1 && player.game_vars.stats.position == 'qb') {
 
-    //var lbl = this.createMenuItem('tackle');
-    //container.appendChild(lbl);
+	    var lbl = this.createMenuItem('throw');
+	    container.appendChild(lbl);
+    }
+
 
     var num_children = container.getNumberOfChildren();
     container.setSize(130, num_children*50);

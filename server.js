@@ -99,8 +99,6 @@ io.sockets.on('connection', function (socket) {
         }
 
       }*/
-      console.log(data.team);
-      console.log(other_player.team);
       var teams = calculateMovesForTime(data.team,other_player.team,10);
       
       data.team = teams[0];
@@ -108,9 +106,6 @@ io.sockets.on('connection', function (socket) {
 
       other_player.team = teams[1];
       other_player.other_team = teams[0];
-
-      console.log(teams[0]);
-      console.log(teams[1]);
 
       socket.emit('new_turn', data);
       socket.broadcast.to(socket.room_id).emit('new_turn', other_player);
@@ -128,14 +123,14 @@ var getPos = function (p, t) {
   var current_x, current_y, next_x, next_y, speed, diff_x, diff_y, dir_x, dir_y, new_x, new_y;
   current_x = p.location.column;
   current_y = p.location.row;
-  next_x = p.next_move.column;
-  next_y = p.next_move.row;
-  speed = p.stats.speed;
-  diff_x = next_x - current_x;  //pos goes right, neg goes left
-  diff_y = next_y - current_y;  //pos goes up, neg goes down
   new_x = current_x;
   new_y = current_y;
   if(p.next_move !== -1) {
+    next_x = p.next_move.column;
+    next_y = p.next_move.row;
+    speed = p.stats.speed;
+    diff_x = next_x - current_x;  //pos goes right, neg goes left
+    diff_y = next_y - current_y;  //pos goes up, neg goes down
     //Calculate direction for x and y
     if(diff_x !== 0)
       dir_x = diff_x / (Math.abs(diff_x));

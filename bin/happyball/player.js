@@ -5,6 +5,8 @@ goog.require('happyball.Menu');
 goog.require('happyball.Square');
 
 happyball.Player = function(my_player) {
+	var player_menu;
+	
 	goog.base(this);
 
 	this.game_vars = {
@@ -36,7 +38,9 @@ happyball.Player = function(my_player) {
 	this.appendChild(light);
 
 	// Create a menu for the player
-	var player_menu = new happyball.Menu();
+	this.createMenu = function () {
+		player_menu = new happyball.Menu(this);
+	}
 
 	var movement = new lime.Sprite();
 	this.appendChild(movement);
@@ -68,10 +72,10 @@ happyball.Player = function(my_player) {
 			this.game_vars.moved = true;
 		}
 
-		this.showMovement = function() {
+		this.showMovement = function(distance) {
 			this.removeChild(player_menu);
 			
-			for (var i = 1; i <= this.game_vars.stats.distance; i++) {
+			for (var i = 1; i <= distance; i++) {
 				// east
 				var sq = new happyball.Square(i, 0);
 				movement.appendChild(sq);
