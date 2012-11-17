@@ -4,7 +4,7 @@ goog.require('lime.Sprite');
 goog.require('happyball.Menu');
 goog.require('happyball.Square');
 
-happyball.Player = function() {
+happyball.Player = function(my_player) {
 	goog.base(this);
 
 	this.game_vars = {
@@ -41,87 +41,89 @@ happyball.Player = function() {
 	var movement = new lime.Sprite();
 	this.appendChild(movement);
 	
-	this.select = function() {
-		if(!this.game_vars.moved) {
-			if(happyball.selectedPlayer)
-				happyball.selectedPlayer.deselect();
+	if(my_player) {
+		this.select = function() {
+			if(!this.game_vars.moved) {
+				if(happyball.selectedPlayer)
+					happyball.selectedPlayer.deselect();
 
-			happyball.selectedPlayer = this;
-			this.appendChild(player_menu);
+				happyball.selectedPlayer = this;
+				this.appendChild(player_menu);
+			}
 		}
-	}
 
-	this.deselect = function() {
-		this.removeChild(player_menu);
-		movement.removeAllChildren();
-		happyball.selectedPlayer = null;
-	}
+		this.deselect = function() {
+			this.removeChild(player_menu);
+			movement.removeAllChildren();
+			happyball.selectedPlayer = null;
+		}
 
-	this.createMove = function(column, row) {
-		this.deselect();
-		var x = column*50;
-		var y = row*50;
-		var next_move_marker = happyball.createLine(3, 25, 25, x+25, y+25).setFill('#B69E67');
-		this.appendChild(next_move_marker);
-		this.game_vars.next_move = {column: column, row: row};
-		this.game_vars.moved = true;
-	}
+		this.createMove = function(column, row) {
+			this.deselect();
+			var x = column*50;
+			var y = row*50;
+			this.next_move_marker = happyball.createLine(3, 25, 25, x+25, y+25).setFill('#B69E67');
+			this.appendChild(this.next_move_marker);
+			this.game_vars.next_move = {column: column, row: row};
+			this.game_vars.moved = true;
+		}
 
-	this.showMovement = function() {
-		this.removeChild(player_menu);
+		this.showMovement = function() {
+			this.removeChild(player_menu);
+			
+			for (var i = 1; i <= this.game_vars.stats.distance; i++) {
+				// east
+				var sq = new happyball.Square(i, 0);
+				movement.appendChild(sq);
+
+				// south
+				var sq = new happyball.Square(0, i);
+				movement.appendChild(sq);
+
+				// north
+				var sq = new happyball.Square(0, i*-1);
+				movement.appendChild(sq);
+
+				// west
+				var sq = new happyball.Square(i*-1, 0);
+				movement.appendChild(sq);
+
+				var sq = new happyball.Square(i, i);
+				movement.appendChild(sq);
+
+				var sq = new happyball.Square(i, i*-1);
+				movement.appendChild(sq);
+
+				var sq = new happyball.Square(i*-1, i*-1);
+				movement.appendChild(sq);
+
+				var sq = new happyball.Square(i*-1, i);
+				movement.appendChild(sq);
+			};
+		}
+
+		// Mousehover function
+		goog.events.listen(this, 'mouseover', function(e) { 
+			if(!this.game_vars.moved)
+				light.setHidden(false);
+
+			var key = goog.events.listen(this.getParent(), 'mousemove', function(e) {
+				if (!this.hitTest(e))
+				{
+					if(!this.game_vars.moved)
+						light.setHidden(true);
+					goog.events.unlistenByKey(key);
+				}	
+
+			},null,this);
+			
+		});
 		
-		for (var i = 1; i <= this.game_vars.stats.distance; i++) {
-			// east
-			var sq = new happyball.Square(i, 0);
-			movement.appendChild(sq);
-
-			// south
-			var sq = new happyball.Square(0, i);
-			movement.appendChild(sq);
-
-			// north
-			var sq = new happyball.Square(0, i*-1);
-			movement.appendChild(sq);
-
-			// west
-			var sq = new happyball.Square(i*-1, 0);
-			movement.appendChild(sq);
-
-			var sq = new happyball.Square(i, i);
-			movement.appendChild(sq);
-
-			var sq = new happyball.Square(i, i*-1);
-			movement.appendChild(sq);
-
-			var sq = new happyball.Square(i*-1, i*-1);
-			movement.appendChild(sq);
-
-			var sq = new happyball.Square(i*-1, i);
-			movement.appendChild(sq);
-		};
+		goog.events.listen(this,['mousedown','touchstart'],function(e){
+			if(!this.game_vars.moved)
+				this.select();
+			e.event.stopPropagation();
+		},false,this);
 	}
-
-	// Mousehover function
-	goog.events.listen(this, 'mouseover', function(e) { 
-		if(!this.game_vars.moved)
-			light.setHidden(false);
-
-		var key = goog.events.listen(this.getParent(), 'mousemove', function(e) {
-			if (!this.hitTest(e))
-			{
-				if(!this.game_vars.moved)
-					light.setHidden(true);
-				goog.events.unlistenByKey(key);
-			}	
-
-		},null,this);
-		
-	});
-	
-	goog.events.listen(this,['mousedown','touchstart'],function(e){
-		if(!this.game_vars.moved)
-			this.select();
-		e.event.stopPropagation();
-	},false,this)
 }
 goog.inherits(happyball.Player, lime.Sprite);

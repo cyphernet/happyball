@@ -11,7 +11,7 @@ happyball.Menu = function() {
 	        addColorStop(1,148,148,148,1);
 	
 	// Container holds all the menu items
-	var container = new lime.Sprite().setPosition(25, 25).setFill(gradient).setAnchorPoint(0, 0).setStroke(2,'#000').setSize(130, 100);
+	var container = new lime.Sprite().setPosition(25, 25).setFill(gradient).setAnchorPoint(0, 0).setStroke(2,'#000');
 
 	// Creates a single menu item with all its functions
 	this.createMenuItem = function(txt) {
@@ -57,9 +57,13 @@ happyball.Menu = function() {
 
     var lbl = this.createMenuItem('move');
     container.appendChild(lbl);
+    
 
-    var lbl = this.createMenuItem('tackle');
-    container.appendChild(lbl);
+    //var lbl = this.createMenuItem('tackle');
+    //container.appendChild(lbl);
+
+    var num_children = container.getNumberOfChildren();
+    container.setSize(130, num_children*50);
 
     return container;
 }

@@ -11,8 +11,10 @@ goog.require('lime.Sprite');
 goog.require('lime.fill.Frame');
 goog.require('lime.animation.KeyframeAnimation');
 goog.require('lime.SpriteSheet');
+goog.require('lime.Button');
 goog.require('lime.ASSETS.player_idle.plist')
 goog.require('lime.animation.MoveBy');
+goog.require('lime.transitions.SlideIn');
 goog.require('happyball.Player');
 
 var GAME_TYPES = [{
@@ -76,10 +78,13 @@ var GAME_TYPES = [{
 	}
 ];
 
+var socket = io.connect();
+
 // entrypoint
 happyball.start = function(){
 
 	happyball.my_team = [];
+	happyball.opponent_team = [];
 	happyball.game = {
 		turn: 1,
 		stage: 1,
@@ -89,51 +94,81 @@ happyball.start = function(){
 	};
 
 	// Game window
-	var director = new lime.Director(document.body, 1400, 1024);
-	director.makeMobileWebAppCapable();
-	director.setDisplayFPS(false);    
+	happyball.director = new lime.Director(document.body, 1400, 1000);
+	happyball.director.makeMobileWebAppCapable();
+	happyball.director.setDisplayFPS(false);
 
+	// Start Menu scene
+	var startscene = new lime.Scene;
+	
+	var start_label = new lime.Label().setText('Happyball is a game').setFontSize(24).setFontColor('#000').setFill('#ccc').
+		setSize(1400,120).setAlign('center').setPadding(10, 20).setAnchorPoint(0,0).setPosition(0, 200);
+
+	startscene.appendChild(start_label);
+
+	var button_text = (happyball.checkGameExists()) ? 'Join multiplayer game' :'Start multiplayer game';
+
+    var multiplayer_btn = new lime.Button(
+         (new lime.Label).setSize(310, 60).setFill('#1E4152').setText(button_text).setFontSize(26).setPadding(5, 20).
+	        setAlign('right').setShadow('#FFF',2,1,1)
+     ).setPosition(680, 300);
+
+     startscene.appendChild(multiplayer_btn);
+
+	var multiplayerscene = new lime.Scene;
+
+	var multiplayer_txt = (happyball.host) ? 'Send this link to a friend to play with them!' : 'Waiting for player.'
+	var multiplayer_info = new lime.Label().setText(multiplayer_txt).setFontSize(26).setFontColor('#000').setFill('#ccc').
+		setSize(1400,500).setAlign('center').setPadding(10, 20).setAnchorPoint(0,0).setPosition(0, 200);
+	multiplayerscene.appendChild(multiplayer_info);
+	
 	// Main game scene
-	var gamescene = new lime.Scene;
+	var gamescene = new lime.Scene();
 
 	// HUD
 	var hud_layer = new lime.Layer();
 	gamescene.appendChild(hud_layer);
 
 	// hud BACKGROUND
-	var header_bg = new lime.Sprite().setSize(1400, 102).setFill('assets/header_bg.png').setPosition(10, 30).setAnchorPoint(0,0);
+	var header_bg = new lime.Sprite().setSize(1400, 102).setFill('assets/header_bg.png').setPosition(0, 30).setAnchorPoint(0,0);
 	hud_layer.appendChild(header_bg);
 
-	// Top lgoo
+	// Top logo
 	var logo = new lime.Sprite().setSize(269, 157).setFill('assets/logo.png').setPosition(100, 10).setAnchorPoint(0,0);
 	hud_layer.appendChild(logo);
 
+	var gradient = new lime.fill.LinearGradient().
+	        setDirection(1,0,1,1).
+	        addColorStop(0,239,239,239,1).
+	        addColorStop(1,148,148,148,1);
+
+    var turn_btn = new lime.Button(
+         (new lime.Label).setSize(150, 35).setFill(gradient).setText('end turn').setFontSize(26).setPadding(0, 0).setStroke(1,'#000'),
+         (new lime.Label).setSize(150, 35).setFill(239,239,239).setText('end turn').setFontSize(26).setPadding(0, 0).setStroke(1,'#000')
+     ).setPosition(500, 105);
+    hud_layer.appendChild(turn_btn);
+
+    goog.events.listen(turn_btn, 'click', function() {
+		happyball.end_turn(hud_layer);
+	});
+
 	// Game layer
-	var game_layer = new lime.Layer();
-	gamescene.appendChild(game_layer);
+	happyball.game_layer = new lime.Layer();
+	gamescene.appendChild(happyball.game_layer);
 
 	var field = new lime.Sprite().setSize(1400, 555).setFill('assets/field.png').setPosition(0, 185).setAnchorPoint(0,0);
-	game_layer.appendChild(field);
+	happyball.game_layer.appendChild(field);
 
 	// Players sprite sheet
 	happyball.player_sprites = new lime.SpriteSheet('assets/p.png', lime.ASSETS.player_idle.plist, lime.parser.ZWOPTEX);
 
-	happyball.generateTeam();
-	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
-		var x = 200 + happyball.my_team[i].game_vars.location.column*50;
-		var y = 220 + happyball.my_team[i].game_vars.location.row*50;
-		happyball.my_team[i].setPosition(x, y)
-		game_layer.appendChild(happyball.my_team[i]);
-	};
-
-	//goog.events.listen(gamescene,['mousedown','touchstart'],function(e){
-	//	happyball.moveToPosition(happyball.selectedPlayer, gamescene.localToNode(e.position,game_layer));
-	//	console.log(e.position);
-	//})
+	goog.events.listen(multiplayer_btn, 'click', function() {
+		happyball.director.replaceScene(multiplayerscene, lime.transitions.SlideIn);
+		happyball.generateRoom(gamescene);
+	});
 
 	// set current scene active
-	director.replaceScene(gamescene);
-
+	happyball.director.replaceScene(startscene);
 }
 
 happyball.generateTeam = function(opponent) {
@@ -147,10 +182,11 @@ happyball.generateTeam = function(opponent) {
 
 		happyball.game.type = randomFromInterval(0, GAME_TYPES.length-1);
 	}
-	happyball.game.type = 0;
 
 	for(var i=0; i<GAME_TYPES[0].positions.length; i++) {
-		var newPlayer = new happyball.Player();
+		var newPlayer = new happyball.Player(true);
+		if(happyball.game.type == 1)
+			newPlayer.setScale(-1, 1);
 		newPlayer.game_vars.id = happyball.my_team.length;
 		newPlayer.game_vars.location = happyball.generatePlayerPosition();
 		newPlayer.game_vars.stats = GAME_TYPES[happyball.game.type].positions[i];
@@ -160,6 +196,74 @@ happyball.generateTeam = function(opponent) {
 		}
 		happyball.my_team.push(newPlayer);
 	}
+
+	var team = happyball.teamToJson(happyball.my_team);
+
+	socket.emit('team', {
+		name: 'Anon',
+		team: team,
+		game_state: happyball.game
+	});
+}
+
+happyball.teamToJson = function(team) {
+	var json_team = [];
+
+	for (var i = team.length - 1; i >= 0; i--) {
+		var player = team[i].game_vars;
+		json_team.push(player);
+	};
+
+	return json_team;
+}
+
+happyball.end_turn = function(hud_layer) {
+	if(!happyball.game.turn_end) {
+		var team = happyball.teamToJson(happyball.my_team);
+		socket.emit('end_turn', {
+			name: 'Anon', 
+			game_state: happyball.game,
+			team: team,
+			ball: 'football?'
+		});
+		happyball.game.turn_end = true;
+		happyball.game_log('game_log', 'Waiting for opponent');
+	}
+}
+
+socket.on('new_turn', function (data) {
+	happyball.game_log('game_log', 'Turn '+data.game_state.turn+'!');
+	happyball.game = data.game_state;
+
+	// ANIMATE DUDES!
+
+	happyball.game.turn_end = false;
+});
+
+happyball.renderOpponentTeam = function(team) {
+	for (var i = team.length - 1; i >= 0; i--) {
+		var newPlayer = new happyball.Player(false);
+		if(happyball.game.type == 0)
+			newPlayer.setScale(-1, 1);
+		newPlayer.game_vars = team[i];
+		happyball.opponent_team.push(newPlayer);
+	};
+
+	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
+		var x = 200 + happyball.opponent_team[i].game_vars.location.column*50;
+		var y = 220 + happyball.opponent_team[i].game_vars.location.row*50;
+		happyball.opponent_team[i].setPosition(x, y);
+		happyball.game_layer.appendChild(happyball.opponent_team[i]);
+	};
+}
+
+happyball.renderTeam = function(team) {
+	for (var i = team.length - 1; i >= 0; i--) {
+		var x = 200 + team[i].game_vars.location.column*50;
+		var y = 220 + team[i].game_vars.location.row*50;
+		team[i].setPosition(x, y);
+		happyball.game_layer.appendChild(team[i]);
+	};
 }
 
 happyball.generatePlayerPosition = function() {
@@ -221,6 +325,83 @@ happyball.createLine = function(size, x1, y1, x2, y2) {
 	var dy = Math.abs(y2-y1); 
 	var width = Math.sqrt(dx*dx+dy*dy)+size; 
 	return new lime.Sprite().setSize(width, size).setAnchorPoint(size/2/ width, .5).setRotation(-Math.atan2(y2-y1, x2-x1)*180/Math.PI).setPosition(x1, y1);
+}
+
+happyball.checkGameExists = function() {
+	happyball.host = true;
+
+	if(window.location.hash.substr(1, 1) === "g") {
+		game_id = window.location.hash.substr(1, window.location.hash.length);
+		happyball.host = false;
+	} else {
+		game_id = 'g' + happyball.createId();
+	}
+
+	happyball.game.id = game_id;
+	if(localStorage.getItem("happyball.user_id")) {
+		happyball.user_id = localStorage.getItem("happyball.user_id");
+	} else {
+		happyball.user_id = 'u' + happyball.createId();
+		localStorage.setItem("happyball.user_id", happyball.user_id);
+	}
+
+	return !happyball.host;
+}
+
+happyball.generateRoom = function(gamescene) {
+	var single_player = false;
+	
+	//football = new Football();
+
+	if(happyball.host) {
+		window.location.hash = happyball.game.id;
+	}
+
+	socket.emit('init', {
+		room_id: happyball.game.id,
+		user_id: happyball.user_id,
+		name: 'Anon'
+	});
+
+	happyball.game_log('game_log', 'Game start.');
+	happyball.game_log('game_log', 'Waiting for opponent.');
+
+	if(single_player) {
+		happyball.generateTeam(null);
+		renderTeam(happyball.my_team);
+	}
+
+	socket.on('opponent', function (data) {
+		if(happyball.host) {
+			happyball.director.replaceScene(gamescene);
+			happyball.generateTeam(null);
+			happyball.renderTeam(happyball.my_team);
+			happyball.game_log('game_log', 'You are on '+GAME_TYPES[happyball.game.type].name);
+		}
+	});
+
+	socket.on('team', function (data) {
+		if(!happyball.host) {
+			happyball.director.replaceScene(gamescene);
+			happyball.generateTeam(data.game_state.type);
+			happyball.renderTeam(happyball.my_team);
+			happyball.game_log('game_log', 'You are on '+GAME_TYPES[happyball.game.type].name);
+		}
+		happyball.renderOpponentTeam(data.team);
+		happyball.game_log('game_log', 'opponent is on '+GAME_TYPES[data.game_state.type].name);
+	});
+}
+
+happyball.game_log = function(id, text) {
+	var d = new Date();
+	var date = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds();
+	console.log('['+date+'] '+text);
+}
+
+happyball.createId = function() {
+	var num = randomFromInterval(1000, 9000);
+	var ts = Math.round((new Date()).getTime() / 1000);
+	return num+ts;
 }
 
 //this is required for outside access after code is compiled in ADVANCED_COMPILATIONS mode
