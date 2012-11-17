@@ -57,7 +57,7 @@ io.sockets.on('connection', function (socket) {
     var other_player = rooms[socket.room_id].complete;
     if(other_player) {
 
-      data.game_state.turn++;
+/*      data.game_state.turn++;
       other_player.game_state.turn++;
 
       // Move both teams players
@@ -98,10 +98,18 @@ io.sockets.on('connection', function (socket) {
           console.log(ball.location + ' :: ' + data.team[i].location + ' ' + data.team[i].hasBall + ' : ' + other_player.team[i].location + ' '  + other_player.team[i].hasBall);
         }
 
-      }
+      }*/
+      var teams = calculateMovesForTime(data.team,other_player.team,10);
+      
+      data.team = teams[0];
+      data.other_team = teams[1];
 
-      data.other_team = other_player.team;
-      other_player.other_team = data.team;
+      other_player.team = teams[1];
+      other_player.other_team = teams[0];
+
+      console.log(teams[0]);
+      console.log(teams[1]);
+
       socket.emit('new_turn', data);
       socket.broadcast.to(socket.room_id).emit('new_turn', other_player);
 
@@ -113,7 +121,7 @@ io.sockets.on('connection', function (socket) {
   
 });
 
-var TOLERANCE = .1, COLLISION_TOLERANCE = .5;
+var TOLERANCE = .1, COLLISION_TOLERANCE = .5, TIMELAPSE=.5;
 var getPos = function (p, t) {
   var current_x, current_y, next_x, next_y, speed, diff_x, diff_y, dir_x, dir_y, new_x, new_y;
   current_x = p.location.column;
@@ -127,15 +135,15 @@ var getPos = function (p, t) {
   new_y = current_y;
   //Calculate direction for x and y
   if(diff_x !== 0)
-    dir_x = diff_x / (abs(diff_x));
+    dir_x = diff_x / (Math.abs(diff_x));
   else
     dir_x = 1;
   if(diff_x !== 0)
-    dir_y = diff_y / (abs(diff_y));
+    dir_y = diff_y / (Math.abs(diff_y));
   else 
     dir_y = 1;
   //y coordinate movement
-  if (abs(diff_y) > TOLERANCE) { 
+  if (Math.abs(diff_y) > TOLERANCE) { 
     new_y = current_y + (t*speed*dir_y);
     //Make sure next move does not go past target location.
     if(dir_y > 0 && new_y > next_y)
@@ -143,11 +151,11 @@ var getPos = function (p, t) {
     else if(dir_y < 0 && new_y < next_y)
       new_y = next_y;
     //if next move is within tolerance set it to next_y
-    if(abs(new_y - next_y) <= TOLERANCE)
+    if(Math.abs(new_y - next_y) <= TOLERANCE)
       new_y = next_y;
   }
   //x coordinate movement
-  if (abs(diff_x) > TOLERANCE) {  
+  if (Math.abs(diff_x) > TOLERANCE) {  
     new_x = current_x + (t*speed*dir_x);
     //Make sure next move does not go past target location.
     if(dir_x > 0 && new_x > next_x)
@@ -155,21 +163,21 @@ var getPos = function (p, t) {
     else if(dir_x < 0 && new_x < next_x)
       new_x = next_x;
     //if next move is within tolerance set it to next_y
-    if(abs(new_x - next_x) <= TOLERANCE)
+    if(Math.abs(new_x - next_x) <= TOLERANCE)
       new_x = next_x;
   }
   return {column: new_x, row: new_y};
 }
 
 var moveTeam = function (team, t) {
-  var team_new_pos = array();
+  var team_new_pos = [];
   for (var i = team.length - 1; i >= 0; i--) {
     team_new_pos[i] = getPos(team[i],t);
   }
   return team_new_pos;
 }
 
-var calculateMoves = function(offense,defense,t) {
+var calculateMoves = function (offense,defense,t) {
   var off_pos, def_pos, off_collision_x, off_collision_y, def_collision_x, def_collision_y;
   off_pos = moveTeam(offense,t);
   def_pos = moveTeam(defense,t);
@@ -185,39 +193,39 @@ var calculateMoves = function(offense,defense,t) {
     for (var j = def_pos.length-1; j >=0; j--) {
       // Offense vs Defense Collision detect     
       // On X Axis
-      if(abs(off_pos[i].column - def_pos[j].column) < COLLISION_TOLERANCE) {
+      if(Math.abs(off_pos[i].column - def_pos[j].column) < COLLISION_TOLERANCE) {
         off_collision_x = true;
       }
       // On Y Axis
-      if(abs(off_pos[i].row - def_pos[j].row) < COLLISION_TOLERANCE) {
+      if(Math.abs(off_pos[i].row - def_pos[j].row) < COLLISION_TOLERANCE) {
         off_collision_y = true;
       }
       // Defense vs Offense Collision detect     
       // On X Axis
-      if(abs(def_pos[i].column - off_pos[j].column) < COLLISION_TOLERANCE) {
+      if(Math.abs(def_pos[i].column - off_pos[j].column) < COLLISION_TOLERANCE) {
         def_collision_x = true;
       }
       // On Y Axis
-      if(abs(def_pos[i].row - off_pos[j].row) < COLLISION_TOLERANCE) {
+      if(Math.abs(def_pos[i].row - off_pos[j].row) < COLLISION_TOLERANCE) {
         def_collision_y = true;
       }
       // Offense vs Offense Collision detect 
       if(i !== j) {
         // On X Axis
-        if(abs(off_pos[i].column - off_pos[j].column) < COLLISION_TOLERANCE) {
+        if(Math.abs(off_pos[i].column - off_pos[j].column) < COLLISION_TOLERANCE) {
           off_collision_x = true;
         }
         // On Y Axis
-        if(abs(off_pos[i].row - off_pos[j].row) < COLLISION_TOLERANCE) {
+        if(Math.abs(off_pos[i].row - off_pos[j].row) < COLLISION_TOLERANCE) {
           off_collision_y = true;
         }
       }
       // Defense vs Defense Collision detect
       if(i !== j) {
-        if(abs(def_pos[i].column - def_pos[j].column) < COLLISION_TOLERANCE) {
+        if(Math.abs(def_pos[i].column - def_pos[j].column) < COLLISION_TOLERANCE) {
           def_collision_x = true;
         }
-        if(abs(def_pos[i].row - def_pos[j].row) < COLLISION_TOLERANCE) {
+        if(Math.abs(def_pos[i].row - def_pos[j].row) < COLLISION_TOLERANCE) {
           def_collision_y = true;
         }
       }
@@ -236,5 +244,15 @@ var calculateMoves = function(offense,defense,t) {
       offense[i].location.column = off_pos[i].column;
     }
   }
-  return array(offense,defense);
+  return [offense,defense];
+}
+
+var calculateMovesForTime = function (offense,defense,time) {
+  var teams = [];
+  for (var i = time-1; i >=0; i--) {
+    teams = calculateMoves(offense,defense,TIMELAPSE);
+    offense = teams[0];
+    defense = teams[1];
+  }
+  return [offense, defense];
 }
