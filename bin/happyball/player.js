@@ -106,13 +106,13 @@ happyball.Player = function(my_player) {
 
 		// Mousehover function
 		goog.events.listen(this, 'mouseover', function(e) { 
-			if(!this.game_vars.moved)
+			if(!this.game_vars.moved && !this.game_vars.tackled)
 				light.setHidden(false);
 
 			var key = goog.events.listen(this.getParent(), 'mousemove', function(e) {
 				if (!this.hitTest(e))
 				{
-					if(!this.game_vars.moved)
+					if(!this.game_vars.moved && !this.game_vars.tackled)
 						light.setHidden(true);
 					goog.events.unlistenByKey(key);
 				}	
@@ -122,7 +122,7 @@ happyball.Player = function(my_player) {
 		});
 		
 		goog.events.listen(this,['mousedown','touchstart'],function(e){
-			if(!this.game_vars.moved)
+			if(!this.game_vars.moved && !this.game_vars.tackled)
 				this.select();
 			e.event.stopPropagation();
 		},false,this);
@@ -143,6 +143,10 @@ happyball.Player = function(my_player) {
 		this.runAction(anim);
 	}
 
+	this.showTackled = function() {
+		this.setFill(happyball.player_sprites.getFrame('tackled_'+color+'.png'))
+	}
+
 	this.moveToPosition = function() {
 		var x = 200 + this.game_vars.location.column*50;
 		var y = 220 + this.game_vars.location.row*50;
@@ -160,7 +164,11 @@ happyball.Player = function(my_player) {
 		
 		goog.events.listen(move,lime.animation.Event.STOP,function(){
 			running.stop();
-			this.targets[0].showIdle();
+			console.log(this.targets[0].game_vars);
+			if(this.targets[0].game_vars.tackled)
+				this.targets[0].showTackled();
+			else
+				this.targets[0].showIdle();
 		})
 
 		this.removeChild(this.next_move_marker);

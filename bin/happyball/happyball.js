@@ -206,6 +206,7 @@ happyball.generateTeam = function(opponent) {
 		game_vars.next_move = -1;
 		game_vars.hasBall = 0;
 		game_vars.level = 1;
+		game_vars.tackled = 0;
 		if(game_vars.stats.position === 'qb') {
 			game_vars.hasBall = 1;
 		}
@@ -218,8 +219,6 @@ happyball.generateTeam = function(opponent) {
 		team: my_team,
 		game_state: happyball.game
 	});
-
-
 }
 
 happyball.teamToJson = function(team) {
@@ -283,6 +282,7 @@ happyball.createTeam = function(data, my_team) {
 		if(newPlayer.game_vars.hasBall === 1) {
 			newPlayer.ball = new happyball.Football();
 		}
+		
 		newPlayer.createMenu();
 		team.push(newPlayer);
 	};
