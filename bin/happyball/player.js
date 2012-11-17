@@ -64,7 +64,7 @@ happyball.Player = function(my_player) {
 			var y = row*50;
 			this.next_move_marker = happyball.createLine(3, 25, 25, x+25, y+25).setFill('#B69E67');
 			this.appendChild(this.next_move_marker);
-			this.game_vars.next_move = {column: column, row: row};
+			this.game_vars.next_move = {column: this.game_vars.location.column + column, row: this.game_vars.location.row + row};
 			this.game_vars.moved = true;
 		}
 
@@ -132,7 +132,7 @@ happyball.Player = function(my_player) {
 
 		this.setPosition(x, y);
 		this.removeChild(this.next_move_marker);
-		this.moved = false;
+		this.game_vars.moved = false;
 	}
 }
 goog.inherits(happyball.Player, lime.Sprite);

@@ -387,8 +387,9 @@ happyball.generateRoom = function(gamescene) {
 	happyball.game_log('game_log', 'Waiting for opponent.');
 
 	if(single_player) {
+		happyball.director.replaceScene(gamescene);
 		happyball.generateTeam(null);
-		renderTeam(happyball.my_team);
+		happyball.renderTeam(happyball.my_team);
 	}
 
 	socket.on('opponent', function (data) {
