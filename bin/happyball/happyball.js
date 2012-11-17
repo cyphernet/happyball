@@ -12,7 +12,7 @@ goog.require('lime.fill.Frame');
 goog.require('lime.animation.KeyframeAnimation');
 goog.require('lime.SpriteSheet');
 goog.require('lime.Button');
-goog.require('lime.ASSETS.player_idle.plist')
+goog.require('lime.ASSETS.player.plist')
 goog.require('lime.animation.MoveBy');
 goog.require('lime.transitions.SlideIn');
 goog.require('happyball.Player');
@@ -171,7 +171,7 @@ happyball.start = function(){
 	happyball.game_layer.appendChild(field);
 
 	// Players sprite sheet
-	happyball.player_sprites = new lime.SpriteSheet('assets/p.png', lime.ASSETS.player_idle.plist, lime.parser.ZWOPTEX);
+	happyball.player_sprites = new lime.SpriteSheet('assets/player.png', lime.ASSETS.player.plist, lime.parser.ZWOPTEX);
 
 	goog.events.listen(multiplayer_btn, 'click', function() {
 		happyball.director.replaceScene(multiplayerscene, lime.transitions.SlideIn);

@@ -18,20 +18,14 @@ happyball.Player = function(my_player) {
 		moved: false
 	};
 
-	this.setFill(happyball.player_sprites.getFrame('idle_right_1.png'));
-	this.setAnchorPoint(0, 0);
-	var anim = new lime.animation.KeyframeAnimation();
-	anim.delay= .3;
-	for(var i=1;i<=4;i++){
-		anim.addFrame(happyball.player_sprites.getFrame('idle_right_'+i+'.png').
-			setSize(50,50));
-	}
-	for(var i=4;i>=1;i--){
-		anim.addFrame(happyball.player_sprites.getFrame('idle_right_'+i+'.png').
-			setSize(50,50));
-	}
+	if(my_player)
+		var color = (happyball.game.type == 0) ? 'right_blue' : 'left_orange';
+	else
+		var color = (happyball.game.type == 0) ? 'left_orange' : 'right_blue';
 
-	this.runAction(anim);
+	this.setFill(happyball.player_sprites.getFrame('idle_'+color+'_1.png'));
+	this.setAnchorPoint(0, 0);
+	
 	
 	// show if player is selected
 	var light = new lime.Sprite().setSize(50,50).setFill(255, 217, 102, .4).setPosition(0, 0).setAnchorPoint(0, 0).setHidden(true);
@@ -130,16 +124,46 @@ happyball.Player = function(my_player) {
 		},false,this);
 	}
 
+	this.showIdle = function() {
+		var anim = new lime.animation.KeyframeAnimation();
+		anim.delay= .3;
+		for(var i=1;i<=4;i++){
+			anim.addFrame(happyball.player_sprites.getFrame('idle_'+color+'_'+i+'.png').
+				setSize(50,50));
+		}
+		for(var i=4;i>=1;i--){
+			anim.addFrame(happyball.player_sprites.getFrame('idle_'+color+'_'+i+'.png').
+				setSize(50,50));
+		}
+
+		this.runAction(anim);
+	}
+
 	this.moveToPosition = function() {
 		var x = 200 + this.game_vars.location.column*50;
 		var y = 220 + this.game_vars.location.row*50;
 
-
-		var move = new lime.animation.MoveTo (x, y).setEasing(lime.animation.Easing.EASEINOUT).setSpeed(.5);
+		var move = new lime.animation.MoveTo(x, y).setEasing(lime.animation.Easing.EASEINOUT).setSpeed(.5);
 		this.runAction(move);
+
+		// show animation
+		var running = new lime.animation.KeyframeAnimation();
+		running.delay = 1/7;
+		for(var i=1;i<=8;i++){
+		    running.addFrame(happyball.player_sprites.getFrame('running_'+color+'_'+i+'.png'));
+		}
+		this.runAction(running);
+		
+		goog.events.listen(move,lime.animation.Event.STOP,function(){
+			running.stop();
+			console.log(this);
+			this.targets[0].showIdle();
+		})
 
 		this.removeChild(this.next_move_marker);
 		this.game_vars.moved = false;
 	}
+
+	this.showIdle();
 }
 goog.inherits(happyball.Player, lime.Sprite);
