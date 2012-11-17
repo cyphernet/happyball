@@ -58,9 +58,13 @@ io.sockets.on('connection', function (socket) {
     if(other_player) {
 
       var teams = calculateMovesForTime(data.team,other_player.team,10);
-      
       data.team = teams[0];
       data.other_team = teams[1];
+      
+      // player has football and not tackled
+      if(teams[3]) { 
+       teams = catchFootball(data.ball,teams[0])
+      }
 
       other_player.team = teams[1];
       other_player.other_team = teams[0];
@@ -219,27 +223,23 @@ var calculateMoves = function (offense,defense,t) {
 var calculateMovesForTime = function (offense,defense,time) {
   //Logic determine tackles
   //get player with ball
-  var side, player, team, playerIndex, teams = [];
+  var side, player, team, playerIndex, teams = [], tackled = false;
 
   for(var i = offense.length-1; i>=0; i--) {
     if(offense[i].hasBall === 1) {
       side = 'offense';
       player = offense[i];
       playerIndex = i;
+      team = defense;
       break;
     }
     else if(defense[i].hasBall === 1) {
       side = 'defense';
       player = defense[i];
       playerIndex = i;
+      team = offense;
       break;
     }
-  }
-  if(side == 'defense') {
-    team = offense;
-  }
-  else if(side == 'offense') {
-    team = defense;
   }
 
   for (var i = time-1; i >=0; i--) {
@@ -248,7 +248,7 @@ var calculateMovesForTime = function (offense,defense,time) {
     defense = teams[1];
     if(team) {
       console.log(team);
-      var t = .1;
+      var t = .2;
       var x = player.location.column;
       var y = player.location.row;
       var tackleArray = [[x,y],[x+t,y],[x-t,y],[x,y+t],[x,y-t],[x-t,y-t]];
@@ -270,11 +270,13 @@ var calculateMovesForTime = function (offense,defense,time) {
       else if (side == 'defense') {
         defense[playerIndex] = player;
       }
-      if(player.tackled)
-        console.log(player);
+      tackled = player.tackled;
     }  
   }
+  return [offense, defense, tackled];
+}
+
+var catchFootball = function (football, offense, defense) {
 
   return [offense, defense];
 }
-
