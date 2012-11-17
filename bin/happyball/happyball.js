@@ -23,26 +23,31 @@ var GAME_TYPES = [{
 				distance: 2,
 				speed: 1,
 				skill: 2,
+				strength: 3,
 				position: 'center'
 			},{
 				distance: 2,
 				speed: 1,
 				skill: 2,
+				strength: 3,
 				position: 'center'
 			}, {
 				distance: 4,
 				speed: 2,
 				skill: 1,
+				strength: 2,
 				position: 'running back'
 			}, {
 				distance: 3,
 				speed: 2,
 				skill: 2,
+				strength: 1,
 				position: 'receiver'
 			}, {
 				distance: 1,
 				speed: 1,
 				skill: 5,
+				strength: 1,
 				position: 'qb'
 			}
 		]
@@ -52,26 +57,31 @@ var GAME_TYPES = [{
 				distance: 2,
 				speed: 1,
 				skill: 2,
+				strength: 2,
 				position: 'end'
 			}, {
 				distance: 4,
 				speed: 2,
 				skill: 1,
+				strength: 1,
 				position: 'safety'
 			}, {
 				distance: 3,
 				speed: 2,
 				skill: 2,
+				strength: 1,
 				position: 'safety'
 			}, {
 				distance: 3,
 				speed: 2,
 				skill: 2,
+				strength: 3,
 				position: 'line back'
 			}, {
 				distance: 3,
 				speed: 2,
 				skill: 2,
+				strength: 3,
 				position: 'line back'
 			}
 		]
