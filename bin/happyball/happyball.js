@@ -283,6 +283,8 @@ socket.on('new_turn', function (data) {
 		happyball.my_team[i].moveToPosition();
 
 		if(happyball.my_team[i].game_vars.hasBall == 1) {
+			happyball.my_team[i].ball = happyball.transferBall();
+			happyball.my_team[i].appendChild(happyball.my_team[i].ball);
 			happyball.my_team[i].ball.game_vars = data.ball;
 			happyball.my_team[i].ball.moveToPosition();
 			var player_with_ball = happyball.my_team[i];
@@ -295,6 +297,8 @@ socket.on('new_turn', function (data) {
 		happyball.opponent_team[i].game_vars = data.other_team[i];
 		happyball.opponent_team[i].moveToPosition();
 		if(happyball.opponent_team[i].game_vars.hasBall == 1) {
+			happyball.opponent_team[i].ball = happyball.transferBall();
+			happyball.opponent_team[i].appendChild(happyball.opponent_team[i].ball);
 			happyball.opponent_team[i].ball.game_vars = data.ball;
 			happyball.opponent_team[i].ball.moveToPosition();
 			var player_with_ball = happyball.my_team[i];
@@ -315,15 +319,24 @@ socket.on('new_turn', function (data) {
 	happyball.hideMessage();
 });
 
-happyball.removeBall = function() {
+happyball.transferBall = function() {
 	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
-		if(happyball.my_team[i].ball)
+		if(happyball.my_team[i].ball) {
+			var ball = happyball.my_team[i].ball;
+			ball.game_vars.moved = true;
+			happyball.my_team[i].removeChild(ball);
 			happyball.my_team[i].ball = null;
+			return ball;
+		}
 	};
 
 	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
-		if(happyball.opponent_team[i].ball) 
+		if(happyball.opponent_team[i].ball) {
+			var ball = happyball.opponent_team[i].ball;
 			happyball.opponent_team[i].ball = null;
+			return ball;
+		}
+			
 	};
 
 	return null;
