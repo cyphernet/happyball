@@ -26,14 +26,16 @@ happyball.Football = function() {
 	}
 
 	this.moveToPosition = function() {
-		var x = (this.game_vars.location.column - this.getParent().game_vars.location.column)*50+11;
-		var y = (this.game_vars.location.row - this.getParent().game_vars.location.row)*50+17;
+		if(this.game_vars.moved) {
+			var x = (this.game_vars.location.column - this.getParent().game_vars.location.column)*50+11;
+			var y = (this.game_vars.location.row - this.getParent().game_vars.location.row)*50+17;
 
-		var move = new lime.animation.MoveTo(x, y).setEasing(lime.animation.Easing.EASEIN).setSpeed(.2);
-		this.runAction(move);
+			var move = new lime.animation.MoveTo(x, y).setEasing(lime.animation.Easing.EASEIN).setSpeed(.2);
+			this.runAction(move);
 
-		this.removeChild(this.next_move_marker);
-		this.game_vars.moved = false;
+			this.removeChild(this.next_move_marker);
+			this.game_vars.moved = false;
+		}
 	}
 }
 goog.inherits(happyball.Football, lime.Sprite);

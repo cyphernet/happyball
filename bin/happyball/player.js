@@ -148,31 +148,33 @@ happyball.Player = function(my_player) {
 	}
 
 	this.moveToPosition = function() {
-		var x = 200 + this.game_vars.location.column*50;
-		var y = 220 + this.game_vars.location.row*50;
+		if(this.game_vars.moved) {
+			var x = 200 + this.game_vars.location.column*50;
+			var y = 220 + this.game_vars.location.row*50;
 
-		var move = new lime.animation.MoveTo(x, y).setEasing(lime.animation.Easing.EASEINOUT).setSpeed(.5);
-		this.runAction(move);
+			var move = new lime.animation.MoveTo(x, y).setEasing(lime.animation.Easing.EASEINOUT).setSpeed(.5);
+			this.runAction(move);
 
-		// show animation
-		var running = new lime.animation.KeyframeAnimation();
-		running.delay = 1/7;
-		for(var i=1;i<=8;i++){
-		    running.addFrame(happyball.player_sprites.getFrame('running_'+color+'_'+i+'.png'));
+			// show animation
+			var running = new lime.animation.KeyframeAnimation();
+			running.delay = 1/7;
+			for(var i=1;i<=8;i++){
+			    running.addFrame(happyball.player_sprites.getFrame('running_'+color+'_'+i+'.png'));
+			}
+			this.runAction(running);
+			
+			goog.events.listen(move,lime.animation.Event.STOP,function(){
+				running.stop();
+
+				if(this.targets[0].game_vars.tackled)
+					this.targets[0].showTackled();
+				else
+					this.targets[0].showIdle();
+			})
+
+			this.removeChild(this.next_move_marker);
+			this.game_vars.moved = false;
 		}
-		this.runAction(running);
-		
-		goog.events.listen(move,lime.animation.Event.STOP,function(){
-			running.stop();
-
-			if(this.targets[0].game_vars.tackled)
-				this.targets[0].showTackled();
-			else
-				this.targets[0].showIdle();
-		})
-
-		this.removeChild(this.next_move_marker);
-		this.game_vars.moved = false;
 	}
 
 	this.showIdle();
