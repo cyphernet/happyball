@@ -286,6 +286,14 @@ socket.on('new_turn', function (data) {
 			happyball.my_team[i].ball = happyball.transferBall();
 			happyball.my_team[i].appendChild(happyball.my_team[i].ball);
 			happyball.my_team[i].ball.game_vars = data.ball;
+
+
+			var baller = happyball.getBaller();
+			var baller_pos = baller.getPosition();
+			happyball.my_team[i].ball.setPosition(baller_pos.x, baller_pos.y);
+
+			happyball.my_team[i].ball.game_vars.location.column = happyball.my_team[i].game_vars.location.column;
+			happyball.my_team[i].ball.game_vars.location.row = happyball.my_team[i].game_vars.location.row;
 			happyball.my_team[i].ball.moveToPosition();
 			var player_with_ball = happyball.my_team[i];
 		} else {
@@ -300,6 +308,16 @@ socket.on('new_turn', function (data) {
 			happyball.opponent_team[i].ball = happyball.transferBall();
 			happyball.opponent_team[i].appendChild(happyball.opponent_team[i].ball);
 			happyball.opponent_team[i].ball.game_vars = data.ball;
+			// set to old guy
+
+			var baller = happyball.getBaller();
+			var baller_pos = baller.getPosition();
+			happyball.opponent_team[i].ball.setPosition(baller_pos.x, baller_pos.y);
+
+
+			// going to new guy
+			happyball.opponent_team[i].ball.game_vars.location.column = happyball.opponent_team[i].game_vars.location.column;
+			happyball.opponent_team[i].ball.game_vars.location.row = happyball.opponent_team[i].game_vars.location.row;
 			happyball.opponent_team[i].ball.moveToPosition();
 			var player_with_ball = happyball.my_team[i];
 		} else {
@@ -352,6 +370,21 @@ happyball.getBall = function() {
 	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
 		if(happyball.opponent_team[i].ball) 
 			return happyball.opponent_team[i].ball;
+	};
+
+	return null;
+}
+
+happyball.getBaller = function() {
+	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
+		console.log(happyball.my_team[i].ball);
+		if(happyball.my_team[i].ball)
+			return happyball.my_team[i];
+	};
+
+	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
+		if(happyball.opponent_team[i].ball) 
+			return happyball.opponent_team[i];
 	};
 
 	return null;
