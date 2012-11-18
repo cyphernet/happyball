@@ -68,7 +68,7 @@ io.sockets.on('connection', function (socket) {
       // player has football and not tackled
       console.log(teams[2]);
       if (!teams[2]) { 
-        teams = catchFootball(ball, teams[0], teams[1]);
+        teams = catchFootball(teams[0], teams[1], ball);
       }
 
       data.team = teams[0];
@@ -290,7 +290,7 @@ var calculateMovesForTime = function (offense,defense,time) {
   return [offense, defense, tackled];
 }
 
-var catchFootball = function (football, offense, defense) {
+var catchFootball = function (offense, defense, football) {
   //check if footballs next move is not -1
   //if not then the ball has been thrown
   var current_loc = football.location;
