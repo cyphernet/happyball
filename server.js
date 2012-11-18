@@ -316,6 +316,3 @@ var catchFootball = function (football, offense, defense) {
   }
   return [offense, defense, football];
 }
-lineLength = function(x, y, x0, y0){
-    return Math.sqrt((x -= x0) * x + (y -= y0) * y);
-};
