@@ -10,7 +10,7 @@ happyball.Football = function() {
 		next_move: -1
 	};
 
-	this.setFill('assets/ball_select.png').setSize(28,16).setAnchorPoint(0,0).setPosition(10,28);
+	this.setFill('assets/ball_select.png').setSize(28,16).setAnchorPoint(0,0).setPosition(10,28).setRenderer(lime.Renderer.CANVAS);
 
 	var movement = new lime.Sprite();
 	this.appendChild(movement);
@@ -26,10 +26,12 @@ happyball.Football = function() {
 	}
 
 	this.moveToPosition = function() {
-		var x = 200 + this.game_vars.location.column*50;
-		var y = 220 + this.game_vars.location.row*50;
+		var x = (this.game_vars.location.column - this.getParent().game_vars.location.column)*50+11;
+		var y = (this.game_vars.location.row - this.getParent().game_vars.location.row)*50+17;
 
-		this.setPosition(x, y);
+		var move = new lime.animation.MoveTo(x, y).setEasing(lime.animation.Easing.EASEIN).setSpeed(.2);
+		this.runAction(move);
+
 		this.removeChild(this.next_move_marker);
 		this.game_vars.moved = false;
 	}

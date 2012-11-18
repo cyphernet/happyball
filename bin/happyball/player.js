@@ -164,7 +164,7 @@ happyball.Player = function(my_player) {
 		
 		goog.events.listen(move,lime.animation.Event.STOP,function(){
 			running.stop();
-			console.log(this.targets[0].game_vars);
+
 			if(this.targets[0].game_vars.tackled)
 				this.targets[0].showTackled();
 			else

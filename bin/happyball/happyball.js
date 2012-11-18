@@ -270,9 +270,8 @@ happyball.getFootballVars = function() {
 	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
 		if(happyball.my_team[i].game_vars.hasBall === 1)
 			return happyball.my_team[i].ball.game_vars;
-
-	return null;
 	};
+	return null;
 }
 
 socket.on('new_turn', function (data) {
@@ -282,17 +281,68 @@ socket.on('new_turn', function (data) {
 	for (var i = data.team.length - 1; i >= 0; i--) {
 		happyball.my_team[i].game_vars = data.team[i];
 		happyball.my_team[i].moveToPosition();
+
+		if(happyball.my_team[i].game_vars.hasBall == 1) {
+			happyball.my_team[i].ball.game_vars = data.ball;
+			happyball.my_team[i].ball.moveToPosition();
+			var player_with_ball = happyball.my_team[i];
+		} else {
+			//happyball.my_team[i].ball = null;
+		}
 	};
 	
 	for (var i = data.other_team.length - 1; i >= 0; i--) {
 		happyball.opponent_team[i].game_vars = data.other_team[i];
 		happyball.opponent_team[i].moveToPosition();
+		if(happyball.opponent_team[i].game_vars.hasBall == 1) {
+			happyball.opponent_team[i].ball.game_vars = data.ball;
+			happyball.opponent_team[i].ball.moveToPosition();
+			var player_with_ball = happyball.my_team[i];
+		} else {
+			//happyball.opponent_team[i].ball = null;
+		}
 	};
 
+	if(!player_with_ball) {
+		var ball = happyball.getBall();
+		ball.game_vars = data.ball;
+		ball.moveToPosition();
+
+		// End round!
+	}
 
 	happyball.game.turn_end = false;
 	happyball.hideMessage();
 });
+
+happyball.removeBall = function() {
+	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
+		if(happyball.my_team[i].ball)
+			happyball.my_team[i].ball = null;
+	};
+
+	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
+		if(happyball.opponent_team[i].ball) 
+			happyball.opponent_team[i].ball = null;
+	};
+
+	return null;
+}
+
+happyball.getBall = function() {
+	for (var i = happyball.my_team.length - 1; i >= 0; i--) {
+		console.log(happyball.my_team[i].ball);
+		if(happyball.my_team[i].ball)
+			return happyball.my_team[i].ball;
+	};
+
+	for (var i = happyball.opponent_team.length - 1; i >= 0; i--) {
+		if(happyball.opponent_team[i].ball) 
+			return happyball.opponent_team[i].ball;
+	};
+
+	return null;
+}
 
 happyball.createTeam = function(data, my_team) {
 	var team = [];
