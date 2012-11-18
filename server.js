@@ -56,18 +56,28 @@ io.sockets.on('connection', function (socket) {
   socket.on('end_turn', function (data) {
     var other_player = rooms[socket.room_id].complete;
     if(other_player) {
-
+      var ball = null;
+      if(data.ball)
+        ball = data.ball;
+      else if(other_player.ball) {
+        ball = other_player.ball;
+      }
+      console.log(ball);
       var teams = calculateMovesForTime(data.team,other_player.team,10);
+
+      // player has football and not tackled
+      console.log(teams[2]);
+      if (!teams[2]) { 
+        teams = catchFootball(ball, teams[0], teams[1]);
+      }
+
       data.team = teams[0];
       data.other_team = teams[1];
-      
-      // player has football and not tackled
-      if(teams[3]) { 
-       teams = catchFootball(data.ball,teams[0])
-      }
+      data.ball = ball;
 
       other_player.team = teams[1];
       other_player.other_team = teams[0];
+      other_player.ball = ball;
 
       socket.emit('new_turn', data);
       socket.broadcast.to(socket.room_id).emit('new_turn', other_player);
@@ -85,12 +95,17 @@ var getPos = function (p, t) {
   var current_x, current_y, next_x, next_y, speed, diff_x, diff_y, dir_x, dir_y, new_x, new_y;
   current_x = p.location.column;
   current_y = p.location.row;
+  if(p.stats) {
+    speed = p.stats.speed;
+  } else {
+    speed = 1;
+  }
   new_x = current_x;
   new_y = current_y;
   if(p.next_move !== -1 && p.tackled !== 1) {
     next_x = p.next_move.column;
     next_y = p.next_move.row;
-    speed = p.stats.speed;
+    
     diff_x = next_x - current_x;  //pos goes right, neg goes left
     diff_y = next_y - current_y;  //pos goes up, neg goes down
     //Calculate direction for x and y
@@ -247,7 +262,6 @@ var calculateMovesForTime = function (offense,defense,time) {
     offense = teams[0];
     defense = teams[1];
     if(team) {
-      console.log(team);
       var t = .5;
       var x = player.location.column;
       var y = player.location.row;
@@ -255,7 +269,7 @@ var calculateMovesForTime = function (offense,defense,time) {
       player.tackled = (function () {
         for(var j = team.length-1; j>=0; j--) {
           for(var k = tackleArray.length-1; k>=0; k--) {
-            console.log(Math.abs(team[j].location.column - tackleArray[k][0]) + ' : ' + Math.abs(team[j].location.row - tackleArray[k][1]));
+           // console.log(Math.abs(team[j].location.column - tackleArray[k][0]) + ' : ' + Math.abs(team[j].location.row - tackleArray[k][1]));
             if(Math.abs(team[j].location.column - tackleArray[k][0]) <= COLLISION_TOLERANCE && Math.abs(team[j].location.row - tackleArray[k][1]) <= COLLISION_TOLERANCE) {
               console.log('tackled!!');
               return true;
@@ -277,6 +291,31 @@ var calculateMovesForTime = function (offense,defense,time) {
 }
 
 var catchFootball = function (football, offense, defense) {
-
-  return [offense, defense];
+  //check if footballs next move is not -1
+  //if not then the ball has been thrown
+  var current_loc = football.location;
+  var next_loc = football.next_move;
+  var point_before;
+  // the ball has been thrown IF:
+  if(next_loc && next_loc !== -1) {
+    //Get trajectory of ball
+    var cont = true, ballArray = [];
+    while(cont)
+    {
+      var pos = getPos(football,1);
+      football.location = pos;
+      ballArray.push(pos);
+      if(Math.abs(pos.column-next_loc.column) <= .5 && Math.abs(pos.row-next_loc.row) <= .5)
+        cont = false;
+    }
+    //Set all players has ball to 0
+    for(var i = offense.length-1;i>=0;i--) {
+      offense[i].hasBall = 0;
+      defense[i].hasBall = 0;
+    }
+  }
+  return [offense, defense, football];
 }
+lineLength = function(x, y, x0, y0){
+    return Math.sqrt((x -= x0) * x + (y -= y0) * y);
+};
