@@ -10,12 +10,14 @@ goog.require('lime.Layer');
 goog.require('lime.Sprite');
 goog.require('lime.fill.Frame');
 goog.require('lime.animation.KeyframeAnimation');
+goog.require('lime.animation.RotateBy');
 goog.require('lime.SpriteSheet');
 goog.require('lime.Button');
 goog.require('lime.ASSETS.player.plist')
 goog.require('lime.animation.MoveBy');
 goog.require('lime.animation.FadeTo');
-goog.require('lime.transitions.SlideIn');
+goog.require('lime.transitions.Dissolve');
+goog.require('lime.RoundedRect');
 goog.require('happyball.Player');
 goog.require('happyball.Football');
 
@@ -112,37 +114,55 @@ happyball.start = function(){
 
 	// Start Menu scene
 	var startscene = new lime.Scene;
-	
-	var start_label = new lime.Label().setText('Happyball is a game').setFontSize(24).setFontColor('#000').setFill('#ccc').
-		setSize(1400,120).setAlign('center').setPadding(10, 20).setAnchorPoint(0,0).setPosition(0, 200);
 
-	startscene.appendChild(start_label);
+	// BG
+	var start_bg_layer = new lime.Layer();
+	startscene.appendChild(start_bg_layer);
+
+	var menu_1_bg = new lime.Sprite().setSize(1400, 1000).setFill('assets/menu1.png').setPosition(0, 0).setAnchorPoint(0,0);
+	start_bg_layer.appendChild(menu_1_bg);
 
 	var button_text = (happyball.checkGameExists()) ? 'Join multiplayer game' :'Start multiplayer game';
 
-    var multiplayer_btn = new lime.Button(
-         (new lime.Label).setSize(310, 60).setFill('#1E4152').setText(button_text).setFontSize(26).setPadding(5, 20).
-	        setAlign('right')
-     ).setPosition(680, 300);
+	var gradient = new lime.fill.LinearGradient().
+	        setDirection(1,0,1,1).
+	        addColorStop(0,239,239,239,1).
+	        addColorStop(1,148,148,148,1);
 
-     startscene.appendChild(multiplayer_btn);
+	var shape = new lime.RoundedRect().setSize(310,60).setFill(gradient).setRadius(10).setStroke(2, '#000').setPosition(400, 600);
+
+    var multiplayer_btn = new lime.Button(
+         (new lime.Label).setSize(300, 50).setText(button_text).setFontSize(26));
+
+    shape.appendChild(multiplayer_btn);
+    startscene.appendChild(shape);
 
 	var multiplayerscene = new lime.Scene;
 
+	var menu_2_bg = new lime.Sprite().setSize(1400, 1000).setFill('assets/menu2.png').setPosition(0, 0).setAnchorPoint(0,0);
+	multiplayerscene.appendChild(menu_2_bg);
+
 	var multiplayer_txt = (happyball.host) ? 'Send this link to a friend to play with them!' : 'Waiting for player.'
 	var multiplayer_info = new lime.Label().setText(multiplayer_txt).setFontSize(26).setFontColor('#000').setFill('#ccc').
-		setSize(1400,500).setAlign('center').setPadding(10, 20).setAnchorPoint(0,0).setPosition(0, 200);
+		setSize(550,60).setAlign('center').setPadding(10, 20).setAnchorPoint(0,0).setPosition(300, 400);
 	multiplayerscene.appendChild(multiplayer_info);
 	
 	// Main game scene
 	var gamescene = new lime.Scene();
+
+	// BG
+	var bg_layer = new lime.Layer();
+	gamescene.appendChild(bg_layer);
+
+	var game_bg = new lime.Sprite().setSize(1400, 1000).setFill('assets/game_bg.png').setPosition(0, 0).setAnchorPoint(0,0);
+	bg_layer.appendChild(game_bg);
 
 	// HUD
 	var hud_layer = new lime.Layer();
 	gamescene.appendChild(hud_layer);
 
 	// hud BACKGROUND
-	var header_bg = new lime.Sprite().setSize(1400, 102).setFill('assets/header_bg.png').setPosition(0, 30).setAnchorPoint(0,0);
+	var header_bg = new lime.Sprite().setSize(1394, 102).setFill('assets/header_bg.png').setPosition(3, 30).setAnchorPoint(0,0);
 	hud_layer.appendChild(header_bg);
 
 	// Top logo
@@ -179,12 +199,12 @@ happyball.start = function(){
 	happyball.player_sprites = new lime.SpriteSheet('assets/player.png', lime.ASSETS.player.plist, lime.parser.ZWOPTEX);
 
 	goog.events.listen(multiplayer_btn, 'click', function() {
-		happyball.director.replaceScene(multiplayerscene, lime.transitions.SlideIn);
+		happyball.director.replaceScene(multiplayerscene, lime.transitions.Dissolve, .7);
 		happyball.generateRoom(gamescene);
 	});
 
 	// set current scene active
-	happyball.director.replaceScene(startscene);
+	happyball.director.replaceScene(startscene, lime.transitions.Dissolve, .7);
 }
 
 happyball.generateTeam = function(opponent) {
@@ -367,14 +387,14 @@ happyball.generateRoom = function(gamescene) {
 	});
 
 	if(single_player) {
-		happyball.director.replaceScene(gamescene);
+		happyball.director.replaceScene(gamescene, lime.transitions.Dissolve, .7);
 		happyball.generateTeam(null);
 		happyball.renderTeam(happyball.my_team);
 	}
 	//Generate our team
 	socket.on('opponent', function (data) {
 		if(happyball.host) {
-			happyball.director.replaceScene(gamescene);
+			happyball.director.replaceScene(gamescene, lime.transitions.Dissolve, .7);
 			happyball.generateTeam(null);
 			happyball.renderTeam(happyball.my_team);
 			var color = (happyball.game.type == 0) ? 'blue' : 'orange';
@@ -384,7 +404,7 @@ happyball.generateRoom = function(gamescene) {
 
 	socket.on('team', function (data) {
 		if(!happyball.host) {
-			happyball.director.replaceScene(gamescene);
+			happyball.director.replaceScene(gamescene, lime.transitions.Dissolve, .7);
 			happyball.generateTeam(data.game_state.type);
 			happyball.renderTeam(happyball.my_team);
 			var color = (happyball.game.type == 0) ? 'blue' : 'orange';
