@@ -15,9 +15,10 @@ goog.require('lime.SpriteSheet');
 goog.require('lime.Button');
 goog.require('lime.ASSETS.player.plist')
 goog.require('lime.animation.MoveBy');
+goog.require('lime.animation.MoveTo');
 goog.require('lime.animation.FadeTo');
 goog.require('lime.transitions.Dissolve');
-goog.require('lime.RoundedRect');
+goog.require('lime.audio.Audio'); 
 goog.require('happyball.Player');
 goog.require('happyball.Football');
 
@@ -119,23 +120,35 @@ happyball.start = function(){
 	var start_bg_layer = new lime.Layer();
 	startscene.appendChild(start_bg_layer);
 
+	// Background music
+	var music = new lime.audio.Audio('https://dl.dropbox.com/u/27691835/music.mp3');
+	lime.scheduleManager.scheduleWithDelay(function(){
+		if(this.isLoaded() && !this.isPlaying())
+			this.play();
+	}, music, 10);
+
 	var menu_1_bg = new lime.Sprite().setSize(1400, 1000).setFill('assets/menu1.png').setPosition(0, 0).setAnchorPoint(0,0);
 	start_bg_layer.appendChild(menu_1_bg);
 
 	var button_text = (happyball.checkGameExists()) ? 'Join multiplayer game' :'Start multiplayer game';
 
-	var gradient = new lime.fill.LinearGradient().
-	        setDirection(1,0,1,1).
-	        addColorStop(0,239,239,239,1).
-	        addColorStop(1,148,148,148,1);
+	var shape = new lime.Circle().setSize(60,60).setFill('#6a1617').setStroke(2, '#000').setPosition(-400, 600);
 
-	var shape = new lime.RoundedRect().setSize(310,60).setFill(gradient).setRadius(10).setStroke(2, '#000').setPosition(400, 600);
+	var multiplayer_btn = new lime.Button(
+		 (new lime.Label).setSize(300, 50).setText(button_text).setFontSize(26).setAnchorPoint(0,0).setPosition(20,-13));
 
-    var multiplayer_btn = new lime.Button(
-         (new lime.Label).setSize(300, 50).setText(button_text).setFontSize(26));
+	shape.appendChild(multiplayer_btn);
+	startscene.appendChild(shape);
 
-    shape.appendChild(multiplayer_btn);
-    startscene.appendChild(shape);
+	var flyin = new lime.animation.MoveTo(300, 600).setDuration(.8).setEasing(lime.animation.Easing.EASEINOUT);
+	shape.runAction(flyin);
+
+	var fadeinout = new lime.animation.Spawn(
+	    new lime.animation.FadeTo(0),
+	    new lime.animation.FadeTo(100)
+    );
+
+    var keepturning = new lime.animation.Loop(fadeinout);
 
 	var multiplayerscene = new lime.Scene;
 
@@ -170,17 +183,17 @@ happyball.start = function(){
 	hud_layer.appendChild(logo);
 
 	var gradient = new lime.fill.LinearGradient().
-	        setDirection(1,0,1,1).
-	        addColorStop(0,239,239,239,1).
-	        addColorStop(1,148,148,148,1);
+			setDirection(1,0,1,1).
+			addColorStop(0,239,239,239,1).
+			addColorStop(1,148,148,148,1);
 
-    var turn_btn = new lime.Button(
-         (new lime.Label).setSize(150, 35).setFill(gradient).setText('end turn').setFontSize(26).setPadding(0, 0).setStroke(1,'#000'),
-         (new lime.Label).setSize(150, 35).setFill(239,239,239).setText('end turn').setFontSize(26).setPadding(0, 0).setStroke(1,'#000')
-     ).setPosition(500, 105);
-    hud_layer.appendChild(turn_btn);
+	var turn_btn = new lime.Button(
+		 (new lime.Label).setSize(150, 35).setFill(gradient).setText('end turn').setFontSize(26).setPadding(0, 0).setStroke(1,'#000'),
+		 (new lime.Label).setSize(150, 35).setFill(239,239,239).setText('end turn').setFontSize(26).setPadding(0, 0).setStroke(1,'#000')
+	 ).setPosition(500, 105);
+	hud_layer.appendChild(turn_btn);
 
-    goog.events.listen(turn_btn, 'click', function() {
+	goog.events.listen(turn_btn, 'click', function() {
 		happyball.end_turn(hud_layer);
 	});
 
